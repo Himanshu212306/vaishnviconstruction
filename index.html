@@ -26,6 +26,15 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- EmailJS SDK Integration -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script type="text/javascript">
+            (function () {
+                // Aapki Public Key yahan add kar di gayi hai
+                emailjs.init("hDg_hBnS8ZTbmwDEZ");
+            })();
+    </script>
+
 </head>
 
 <body class="bg-gray-50 text-gray-900 dark:bg-navy-bgDark dark:text-gray-100 transition-colors duration-300 font-sans">
@@ -275,6 +284,45 @@
             const nextSlide = () => {
                 setCurrentIndex((prev) => (prev + 1) % albumImages.length);
             };
+            // email sent
+            const handleFormSubmit = (e) => {
+                e.preventDefault();
+                const form = e.target;
+                const formData = new FormData(form);
+
+                // Form se saare details extract karna
+                const enquiryData = {
+                    from_name: formData.get('name'),
+                    from_phone: formData.get('phone'),
+                    from_email: formData.get('email'),
+                    project_type: formData.get('projectType'),
+                    location: formData.get('location')
+                };
+
+                // Admin Dashboard local state update
+                const newEnquiry = {
+                    id: Date.now(),
+                    name: enquiryData.from_name,
+                    phone: enquiryData.from_phone,
+                    email: enquiryData.from_email,
+                    project: enquiryData.project_type,
+                    location: enquiryData.location,
+                    status: 'New',
+                    date: new Date().toISOString().split('T')[0]
+                };
+                setEnquiries([newEnquiry, ...enquiries]);
+
+                // 🔴 YOUR_SERVICE_ID aur YOUR_TEMPLATE_ID ko apne EmailJS ID se badlein
+                emailjs.send("212306", "template_9ucubup", enquiryData)
+                    .then((result) => {
+                        alert("Dhanyawad! Aapki enquiry receive ho gayi hai aur email himanshusingh7392827928@gmail.com par bhej di gayi hai.");
+                        form.reset();
+                    }, (error) => {
+                        alert("Form Dashboard me save ho gaya, par Email bhejte waqt dikkat aayi. Kripya Service ID aur Template ID check karein.");
+                        console.error("Email error:", error);
+                    });
+            };
+
 
             return (
                 <div>
