@@ -49,11 +49,14 @@
             const [activeTab, setActiveTab] = useState('home');
             const [scrolled, setScrolled] = useState(false);
             const [menuOpen, setMenuOpen] = useState(false);
-
-            const [enquiries, setEnquiries] = useState([
-                { id: 1, name: "Himanshu Singh", phone: "9838667430", email: "Himanshu@gmail.com", project: "Residential", location: "Mirzapur", status: "New", date: "2026-08-18" }
-            ]);
-
+            //inquaris ----
+            const [enquiries, setEnquiries] = useState(() => {
+                // Browser storage se purana data load karein
+                const savedData = localStorage.getItem('vaishnavi_enquiries');
+                return savedData ? JSON.parse(savedData) : [
+                    { id: 1, name: "Himanshu Singh", phone: "9838667430", email: "Himanshu@gmail.com", project: "Residential", location: "Mirzapur", status: "New", date: "2026-08-18" }
+                ];
+            });
             // Projects State
             const [projects, setProjects] = useState([
                 {
@@ -61,7 +64,7 @@
                     title: "Commercial Complex",
                     category: "Commercial",
                     status: "Ongoing",
-                
+
                     image: "incompleted.jpeg"
                 },
                 {
@@ -69,7 +72,7 @@
                     title: "Luxury Villa Design",
                     category: "Residential",
                     status: "Completed",
-            
+
                     image: "project2.jpeg"
                 }
             ]);
@@ -84,13 +87,11 @@
                 setDarkMode(!darkMode);
                 document.documentElement.classList.toggle('dark');
             };
-// email inquairy
             const handleFormSubmit = (e) => {
                 e.preventDefault();
                 const form = e.target;
                 const formData = new FormData(form);
 
-                // Form se saare details extract karna
                 const enquiryData = {
                     from_name: formData.get('name'),
                     from_phone: formData.get('phone'),
@@ -99,7 +100,6 @@
                     location: formData.get('location')
                 };
 
-                // Admin Dashboard local state update
                 const newEnquiry = {
                     id: Date.now(),
                     name: enquiryData.from_name,
@@ -110,20 +110,24 @@
                     status: 'New',
                     date: new Date().toISOString().split('T')[0]
                 };
-                setEnquiries([newEnquiry, ...enquiries]);
 
-                // 🔴 YOUR_SERVICE_ID aur YOUR_TEMPLATE_ID ko apne EmailJS ID se badlein
+                // Naya data list mein add karein
+                const updatedEnquiries = [newEnquiry, ...enquiries];
+                setEnquiries(updatedEnquiries);
+
+                // Yahan DATA SAVE ho raha hai browser ke storage mein
+                localStorage.setItem('vaishnavi_enquiries', JSON.stringify(updatedEnquiries));
+
                 emailjs.send("212306", "template_9ucubup", enquiryData)
                     .then((result) => {
-                        alert("Dhanyawad! Aapki enquiry receive ho gayi hai aur email himanshusingh7392827928@gmail.com par bhej di gayi hai.");
+                        alert("Dhanyawad! Aapki enquiry save ho gayi hai.");
                         form.reset();
                     }, (error) => {
-                        alert("Form Dashboard me save ho gaya, par Email bhejte waqt dikkat aayi. Kripya Service ID aur Template ID check karein.");
-                        console.error("Email error:", error);
+                        alert("Form Save ho gaya! Email bhejte waqt dikkat aayi.");
+                        form.reset();
                     });
             };
-
-
+            
             return (
                 <div className="min-h-screen flex flex-col justify-between">
 
@@ -143,8 +147,8 @@
 
                     {/* Navigation */}
                     <nav className={`sticky top-0 z-40 transition-all duration-300 ${scrolled
-                            ? 'bg-navy-dark text-white shadow-lg py-2'
-                            : 'bg-navy text-white py-3'
+                        ? 'bg-navy-dark text-white shadow-lg py-2'
+                        : 'bg-navy text-white py-3'
                         }`}>
                         <div className="max-w-7xl mx-auto px-4 flex justify-between items-center">
                             <div className="flex items-center gap-3 cursor-pointer" onClick={() => setActiveTab('home')}>
@@ -305,7 +309,8 @@
             const nextSlide = () => {
                 setCurrentIndex((prev) => (prev + 1) % albumImages.length);
             };
-           
+
+
             return (
                 <div>
                     {/* Auto Slideshow Banner */}
@@ -366,13 +371,13 @@
                     </div>
 
                     {/* Stats Bar */}
-                
-                        <div className="bg-white dark:bg-navy p-6 rounded shadow border border-gray-200 dark:border-gray-800 text-center">
-                            <h3 className="text-3xl font-black text-gold">{enquiries.length}</h3>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold mt-1">Recorded Inquiries</p>
-                        </div>
+
+                    <div className="bg-white dark:bg-navy p-6 rounded shadow border border-gray-200 dark:border-gray-800 text-center">
+                        <h3 className="text-3xl font-black text-gold">{enquiries.length}</h3>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold mt-1">Recorded Inquiries</p>
                     </div>
-                
+                </div>
+
             );
         }
 
@@ -430,7 +435,7 @@
                             <p className="text-xs text-gold text-center font-semibold mb-3">Business Head</p>
                             <p className="text-xs text-gray-500 dark:text-gray-400 text-center">Managing client relationships, commercial estimations, and expansion strategy.</p>
                         </div>
-                          {/* Er. Himanshu Singh Profile Card with Portfolio Link */}
+                        {/* Er. Himanshu Singh Profile Card with Portfolio Link */}
                         <div className="bg-white dark:bg-navy p-6 rounded shadow border border-gray-200 dark:border-gray-800 flex flex-col items-center group transition duration-300 hover:border-gold">
                             <a href="https://himanshu-wheat.vercel.app/" target="_blank" rel="noopener noreferrer" className="block text-center">
                                 <img
@@ -441,7 +446,7 @@
                                 />
                                 <h4 className="text-lg font-bold text-center group-hover:text-gold transition-colors flex items-center justify-center gap-1">
                                     Er. Himanshu Singh
-                                
+
                                 </h4>
                             </a>
                             <p className="text-xs text-gold text-center font-semibold mb-3">IT Head</p>
@@ -449,8 +454,8 @@
                             <a
                                 href="https://himanshu-wheat.vercel.app/"
                                 target="_blank"
-                                 rel="noopener noreferrer"
-                               
+                                rel="noopener noreferrer"
+
 
                             >
 
@@ -498,7 +503,7 @@
                                             e.target.style.display = 'none';
                                             e.target.nextElementSibling.style.display = 'flex';
                                         }}
-                                        
+
                                     />
                                     <div className="hidden absolute inset-0 items-center justify-center text-gray-500 bg-gray-200 dark:bg-navy-dark">
                                         <i className="fas fa-building text-4xl text-gold"></i>
@@ -513,7 +518,7 @@
                                         <span className="text-[10px] bg-gold/20 text-gold px-2 py-0.5 rounded font-bold uppercase">{p.category}</span>
                                         <h3 className="text-lg font-bold mt-2">{p.title}</h3>
                                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                             {p.location}
+                                            <i className="fas fa-map-marker-alt text-gold mr-1"></i> {p.location}
                                         </p>
                                     </div>
                                 </div>
@@ -528,7 +533,7 @@
         function ServicesView() {
             const services = [
                 "Residential Construction", "Commercial Buildings", "Civil Engineering",
-                 "Site Supervision", "Quantity Estimation",
+                "Site Supervision", "Quantity Estimation",
                 "Renovation & Remodeling", "Infrastructure Development"
             ];
             return (
@@ -624,66 +629,42 @@
         }
 
         // Dashboard View Component
-        function DashboardView({ enquiries, projects, setProjects }) {
-            const [newTitle, setNewTitle] = useState('');
-            const [newCat, setNewCat] = useState('Residential');
-
-            const addProject = (e) => {
-                e.preventDefault();
-                if (!newTitle) return;
-                setProjects([...projects, {
-                    id: Date.now(),
-                    title: newTitle,
-                    category: newCat,
-                    status: 'Ongoing',
-                    location: 'Mirzapur',
-                    image: 'incompleted.jpeg'
-                }]);
-                setNewTitle('');
-            };
-
-            return (
-                <div className="max-w-7xl mx-auto px-4 py-12">
-                    <h2 className="text-2xl font-black mb-6">Admin Management Dashboard</h2>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
-                        <div className="bg-white dark:bg-navy p-6 rounded shadow border border-gray-200 dark:border-gray-800">
-                            <h3 className="font-bold text-lg mb-4 text-gold">Real Customer Inquiries ({enquiries.length})</h3>
-                            <div className="space-y-3 max-h-60 overflow-y-auto">
-                                {enquiries.map(e => (
-                                    <div key={e.id} className="p-3 bg-gray-50 dark:bg-navy-dark rounded text-xs">
-                                        <p className="font-bold">{e.name} ({e.phone})</p>
-                                        <p className="text-gray-500">{e.project} - {e.location}</p>
-                                    </div>
-                                ))}
+         function DashboardView({ enquiries, projects, setProjects }) {
+                return (
+                    <div className="max-w-7xl mx-auto px-4 py-12">
+                        <h2 className="text-3xl font-black mb-6">Admin Dashboard</h2>
+                        <div className="bg-white dark:bg-navy p-6 rounded-2xl shadow-xl border border-gray-200 dark:border-navy-light/40">
+                            <h3 className="text-xl font-bold mb-4">Recorded Enquiries</h3>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left text-xs">
+                                    <thead>
+                                        <tr className="border-b border-gray-200 dark:border-navy-light/40 text-gold">
+                                            <th className="p-3">Name</th>
+                                            <th className="p-3">Phone</th>
+                                            <th className="p-3">Email</th>
+                                            <th className="p-3">Project</th>
+                                            <th className="p-3">Location</th>
+                                            <th className="p-3">Date</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {enquiries.map(e => (
+                                            <tr key={e.id} className="border-b border-gray-100 dark:border-navy-light/20">
+                                                <td className="p-3 font-bold">{e.name}</td>
+                                                <td className="p-3">{e.phone}</td>
+                                                <td className="p-3">{e.email}</td>
+                                                <td className="p-3">{e.project}</td>
+                                                <td className="p-3">{e.location}</td>
+                                                <td className="p-3">{e.date}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
-
-                        <div className="bg-white dark:bg-navy p-6 rounded shadow border border-gray-200 dark:border-gray-800">
-                            <h3 className="font-bold text-lg mb-4 text-gold">Add New Project</h3>
-                            <form onSubmit={addProject} className="space-y-3">
-                                <input
-                                    value={newTitle}
-                                    onChange={e => setNewTitle(e.target.value)}
-                                    placeholder="Project Name"
-                                    className="w-full p-2 text-xs rounded border dark:bg-navy-dark dark:border-gray-700"
-                                />
-                                <select
-                                    value={newCat}
-                                    onChange={e => setNewCat(e.target.value)}
-                                    className="w-full p-2 text-xs rounded border dark:bg-navy-dark dark:border-gray-700"
-                                >
-                                    <option>Residential</option>
-                                    <option>Commercial</option>
-                                    <option>Infrastructure</option>
-                                </select>
-                                <button type="submit" className="bg-gold text-navy-dark font-bold px-4 py-2 rounded text-xs">Add Project</button>
-                            </form>
-                        </div>
                     </div>
-                </div>
-            );
-        }
+                );
+            }
 
         ReactDOM.createRoot(document.getElementById('root')).render(<App />);
     </script>
