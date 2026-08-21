@@ -30,7 +30,7 @@
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script type="text/javascript">
             (function () {
-                // Aapki Public Key yahan add kar di gayi hai
+                // EmailJS Public Key Initialized
                 emailjs.init("hDg_hBnS8ZTbmwDEZ");
             })();
     </script>
@@ -49,33 +49,35 @@
             const [activeTab, setActiveTab] = useState('home');
             const [scrolled, setScrolled] = useState(false);
             const [menuOpen, setMenuOpen] = useState(false);
-            //inquaris ----
+
+            // Enquiries State
             const [enquiries, setEnquiries] = useState(() => {
-                // Browser storage se purana data load karein
                 const savedData = localStorage.getItem('vaishnavi_enquiries');
                 return savedData ? JSON.parse(savedData) : [
                     { id: 1, name: "Himanshu Singh", phone: "9838667430", email: "Himanshu@gmail.com", project: "Residential", location: "Mirzapur", status: "New", date: "2026-08-18" }
                 ];
             });
+
             // Projects State
-            const [projects, setProjects] = useState([
-                {
-                    id: 1,
-                    title: "Commercial Complex",
-                    category: "Commercial",
-                    status: "Ongoing",
-
-                    image: "incompleted.jpeg"
-                },
-                {
-                    id: 2,
-                    title: "Luxury Villa Design",
-                    category: "Residential",
-                    status: "Completed",
-
-                    image: "project2.jpeg"
-                }
-            ]);
+            const [projects, setProjects] = useState(() => {
+                const savedProjects = localStorage.getItem('vaishnavi_projects');
+                return savedProjects ? JSON.parse(savedProjects) : [
+                    {
+                        id: 1,
+                        title: "Commercial Complex",
+                        category: "Commercial",
+                        status: "Ongoing",
+                        image: "incompleted.jpeg"
+                    },
+                    {
+                        id: 2,
+                        title: "Luxury Villa Design",
+                        category: "Residential",
+                        status: "Completed",
+                        image: "project2.jpeg"
+                    }
+                ];
+            });
 
             useEffect(() => {
                 const handleScroll = () => setScrolled(window.scrollY > 40);
@@ -87,6 +89,7 @@
                 setDarkMode(!darkMode);
                 document.documentElement.classList.toggle('dark');
             };
+
             const handleFormSubmit = (e) => {
                 e.preventDefault();
                 const form = e.target;
@@ -111,11 +114,8 @@
                     date: new Date().toISOString().split('T')[0]
                 };
 
-                // Naya data list mein add karein
                 const updatedEnquiries = [newEnquiry, ...enquiries];
                 setEnquiries(updatedEnquiries);
-
-                // Yahan DATA SAVE ho raha hai browser ke storage mein
                 localStorage.setItem('vaishnavi_enquiries', JSON.stringify(updatedEnquiries));
 
                 emailjs.send("212306", "template_9ucubup", enquiryData)
@@ -127,7 +127,7 @@
                         form.reset();
                     });
             };
-            
+
             return (
                 <div className="min-h-screen flex flex-col justify-between">
 
@@ -166,13 +166,13 @@
 
                             {/* Desktop Navigation */}
                             <div className="hidden md:flex items-center gap-6 text-sm font-medium">
-                                {['home', 'about', 'projects', 'services', 'gallery', 'contact', 'dashboard'].map(tab => (
+                                {['home', 'about', 'projects', 'services', 'gallery', 'contact', 'admin'].map(tab => (
                                     <button
                                         key={tab}
                                         onClick={() => setActiveTab(tab)}
                                         className={`capitalize transition-colors ${activeTab === tab ? 'text-gold font-bold border-b-2 border-gold pb-1' : 'hover:text-gold'}`}
                                     >
-                                        {tab}
+                                        {tab === 'admin' ? 'Admin Portal' : tab}
                                     </button>
                                 ))}
                                 <button onClick={toggleDarkMode} className="p-2 text-gold hover:text-white">
@@ -197,13 +197,13 @@
                         {/* Mobile Drawer */}
                         {menuOpen && (
                             <div className="md:hidden bg-navy-dark text-white p-4 space-y-3 border-t border-gray-800">
-                                {['home', 'about', 'projects', 'services', 'gallery', 'contact', 'dashboard'].map(tab => (
+                                {['home', 'about', 'projects', 'services', 'gallery', 'contact', 'admin'].map(tab => (
                                     <button
                                         key={tab}
                                         onClick={() => { setActiveTab(tab); setMenuOpen(false); }}
                                         className="block w-full text-left capitalize py-1 text-sm font-medium hover:text-gold"
                                     >
-                                        {tab}
+                                        {tab === 'admin' ? 'Admin Portal' : tab}
                                     </button>
                                 ))}
                             </div>
@@ -218,7 +218,7 @@
                         {activeTab === 'services' && <ServicesView />}
                         {activeTab === 'gallery' && <GalleryView />}
                         {activeTab === 'contact' && <ContactView handleFormSubmit={handleFormSubmit} />}
-                        {activeTab === 'dashboard' && <DashboardView enquiries={enquiries} projects={projects} setProjects={setProjects} />}
+                        {activeTab === 'admin' && <AdminPortalView enquiries={enquiries} setEnquiries={setEnquiries} projects={projects} setProjects={setProjects} />}
                     </main>
 
                     {/* Floating WhatsApp CTA */}
@@ -255,6 +255,7 @@
                                     <a onClick={() => setActiveTab('about')} className="hover:text-gold cursor-pointer">About Us</a>
                                     <a onClick={() => setActiveTab('projects')} className="hover:text-gold cursor-pointer">Projects</a>
                                     <a onClick={() => setActiveTab('contact')} className="hover:text-gold cursor-pointer">Contact</a>
+                                    <a onClick={() => setActiveTab('admin')} className="hover:text-gold cursor-pointer text-gold font-bold">Admin Portal Login</a>
                                 </div>
                             </div>
                             <div>
@@ -281,7 +282,256 @@
             );
         }
 
-        // Home View Component with Auto Slideshow Banner
+        // --- FULL ADMIN PORTAL MANAGEMENT COMPONENT ---
+        function AdminPortalView({ enquiries, setEnquiries, projects, setProjects }) {
+            const [isAuthenticated, setIsAuthenticated] = useState(false);
+            const [password, setPassword] = useState('');
+            const [loginError, setLoginError] = useState('');
+
+            // New Project Form State
+            const [newProjTitle, setNewProjTitle] = useState('');
+            const [newProjCategory, setNewProjCategory] = useState('Residential');
+            const [newProjStatus, setNewProjStatus] = useState('Ongoing');
+            const [newProjImage, setNewProjImage] = useState('incompleted.jpeg');
+
+            // Admin Login Handler (Passcode: 12345)
+            const handleLogin = (e) => {
+                e.preventDefault();
+                if (password === 'Vaishnavi@2025') {
+                    setIsAuthenticated(true);
+                    setLoginError('');
+                } else {
+                    setLoginError('Sahi password daalein! (Default Pass: 12345)');
+                }
+            };
+
+            // Update Client Enquiry Status
+            const handleStatusChange = (id, newStatus) => {
+                const updated = enquiries.map(item => item.id === id ? { ...item, status: newStatus } : item);
+                setEnquiries(updated);
+                localStorage.setItem('vaishnavi_enquiries', JSON.stringify(updated));
+            };
+
+            // Delete Client Enquiry
+            const handleDeleteEnquiry = (id) => {
+                if (window.confirm("Kya aap is inquiry ko delete karna chahte hain?")) {
+                    const updated = enquiries.filter(item => item.id !== id);
+                    setEnquiries(updated);
+                    localStorage.setItem('vaishnavi_enquiries', JSON.stringify(updated));
+                }
+            };
+
+            // Add New Project
+            const handleAddProject = (e) => {
+                e.preventDefault();
+                if (!newProjTitle) return;
+
+                const newProj = {
+                    id: Date.now(),
+                    title: newProjTitle,
+                    category: newProjCategory,
+                    status: newProjStatus,
+                    image: newProjImage || 'incompleted.jpeg'
+                };
+
+                const updatedProjects = [newProj, ...projects];
+                setProjects(updatedProjects);
+                localStorage.setItem('vaishnavi_projects', JSON.stringify(updatedProjects));
+
+                setNewProjTitle('');
+                setNewProjImage('incompleted.jpeg');
+                alert("Project Safaltapoorvak Add Ho Gaya!");
+            };
+
+            // Toggle Project Status
+            const handleProjectStatusToggle = (id) => {
+                const updated = projects.map(p => {
+                    if (p.id === id) {
+                        return { ...p, status: p.status === 'Ongoing' ? 'Completed' : 'Ongoing' };
+                    }
+                    return p;
+                });
+                setProjects(updated);
+                localStorage.setItem('vaishnavi_projects', JSON.stringify(updated));
+            };
+
+            // Delete Project
+            const handleDeleteProject = (id) => {
+                if (window.confirm("Kya aap is project ko website se hatana chahte hain?")) {
+                    const updated = projects.filter(p => p.id !== id);
+                    setProjects(updated);
+                    localStorage.setItem('vaishnavi_projects', JSON.stringify(updated));
+                }
+            };
+
+            if (!isAuthenticated) {
+                return (
+                    <div className="max-w-md mx-auto my-16 px-4">
+                        <div className="bg-white dark:bg-navy p-8 rounded-xl shadow-xl border border-gray-200 dark:border-gray-800 text-center">
+                            <div className="w-16 h-16 bg-gold/10 text-gold rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                                <i className="fas fa-user-shield"></i>
+                            </div>
+                            <h2 className="text-2xl font-black mb-1">Admin Portal Access</h2>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-6">Management authentication required</p>
+
+                            <form onSubmit={handleLogin} className="space-y-4">
+                                <div>
+                                    <input
+                                        type="password"
+                                        placeholder="Enter Passcode (Default: 12345)"
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        className="w-full p-3 text-sm rounded bg-gray-50 dark:bg-navy-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:border-gold text-center font-mono"
+                                        required
+                                    />
+                                </div>
+                                {loginError && <p className="text-red-500 text-xs font-semibold">{loginError}</p>}
+                                <button type="submit" className="w-full bg-gold hover:bg-gold-light text-navy-dark font-bold py-3 rounded shadow uppercase text-xs tracking-wider transition">
+                                    Login to Admin Dashboard
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="max-w-7xl mx-auto px-4 py-12">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4 border-b border-gray-200 dark:border-gray-800 pb-4">
+                        <div>
+                            <span className="text-gold font-bold text-xs uppercase tracking-widest">Control Center</span>
+                            <h2 className="text-3xl font-black">Admin Management Dashboard</h2>
+                        </div>
+                        <button onClick={() => setIsAuthenticated(false)} className="bg-red-600 hover:bg-red-700 text-white text-xs font-bold px-4 py-2 rounded shadow transition flex items-center gap-2">
+                            <i className="fas fa-sign-out-alt"></i> Logout Admin
+                        </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        {/* Section 1: Enquiries Table */}
+                        <div className="lg:col-span-2 space-y-6">
+                            <div className="bg-white dark:bg-navy p-6 rounded-xl shadow border border-gray-200 dark:border-gray-800">
+                                <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                                    <i className="fas fa-inbox text-gold"></i> Client Inquiries & Leads ({enquiries.length})
+                                </h3>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-left text-xs">
+                                        <thead className="bg-gray-100 dark:bg-navy-dark text-gray-500 dark:text-gray-400 uppercase">
+                                            <tr>
+                                                <th className="p-3">Client</th>
+                                                <th className="p-3">Contact</th>
+                                                <th className="p-3">Type</th>
+                                                <th className="p-3">Location</th>
+                                                <th className="p-3">Status</th>
+                                                <th className="p-3 text-right">Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+                                            {enquiries.map(e => (
+                                                <tr key={e.id} className="hover:bg-gray-50 dark:hover:bg-navy-dark/50">
+                                                    <td className="p-3 font-bold">
+                                                        {e.name}
+                                                        <span className="block text-[10px] text-gray-400 font-normal">{e.date}</span>
+                                                    </td>
+                                                    <td className="p-3">
+                                                        <a href={`tel:${e.phone}`} className="text-gold font-semibold hover:underline block">{e.phone}</a>
+                                                        <span className="text-[10px] text-gray-400 block">{e.email}</span>
+                                                    </td>
+                                                    <td className="p-3"><span className="bg-gold/10 text-gold px-2 py-0.5 rounded font-bold">{e.project}</span></td>
+                                                    <td className="p-3">{e.location}</td>
+                                                    <td className="p-3">
+                                                        <select
+                                                            value={e.status}
+                                                            onChange={(evt) => handleStatusChange(e.id, evt.target.value)}
+                                                            className={`p-1 text-[11px] rounded font-bold border ${e.status === 'Completed' ? 'bg-green-100 text-green-800 border-green-300' : e.status === 'In Progress' ? 'bg-blue-100 text-blue-800 border-blue-300' : 'bg-amber-100 text-amber-800 border-amber-300'}`}
+                                                        >
+                                                            <option value="New">New</option>
+                                                            <option value="In Progress">In Progress</option>
+                                                            <option value="Completed">Completed</option>
+                                                            <option value="Rejected">Rejected</option>
+                                                        </select>
+                                                    </td>
+                                                    <td className="p-3 text-right">
+                                                        <button onClick={() => handleDeleteEnquiry(e.id)} className="text-red-500 hover:text-red-700 p-1">
+                                                            <i className="fas fa-trash-can"></i>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            {/* Section 2: Projects Control */}
+                            <div className="bg-white dark:bg-navy p-6 rounded-xl shadow border border-gray-200 dark:border-gray-800">
+                                <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                                    <i className="fas fa-tasks text-gold"></i> Live Projects Control ({projects.length})
+                                </h3>
+                                <div className="space-y-3">
+                                    {projects.map(p => (
+                                        <div key={p.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-navy-dark rounded-lg border border-gray-200 dark:border-gray-700">
+                                            <div>
+                                                <h4 className="font-bold text-sm">{p.title}</h4>
+                                                <span className="text-[10px] text-gray-400">{p.category} | Image: {p.image}</span>
+                                            </div>
+                                            <div className="flex items-center gap-3">
+                                                <button
+                                                    onClick={() => handleProjectStatusToggle(p.id)}
+                                                    className={`px-3 py-1 rounded text-xs font-bold ${p.status === 'Completed' ? 'bg-green-600 text-white' : 'bg-amber-500 text-navy-dark'}`}
+                                                >
+                                                    {p.status}
+                                                </button>
+                                                <button onClick={() => handleDeleteProject(p.id)} className="text-red-500 hover:text-red-700">
+                                                    <i className="fas fa-trash-can"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Section 3: Add New Project Form */}
+                        <div className="bg-white dark:bg-navy p-6 rounded-xl shadow border border-gray-200 dark:border-gray-800 h-fit">
+                            <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                                <i className="fas fa-folder-plus text-gold"></i> Create New Project
+                            </h3>
+                            <form onSubmit={handleAddProject} className="space-y-4">
+                                <div>
+                                    <label className="block text-xs font-bold uppercase text-gray-500 dark:text-gray-400 mb-1">Project Title</label>
+                                    <input type="text" value={newProjTitle} onChange={(e) => setNewProjTitle(e.target.value)} required placeholder="e.g. Modern Villa Design" className="w-full p-2.5 text-xs rounded bg-gray-50 dark:bg-navy-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:border-gold" />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold uppercase text-gray-500 dark:text-gray-400 mb-1">Category</label>
+                                    <select value={newProjCategory} onChange={(e) => setNewProjCategory(e.target.value)} className="w-full p-2.5 text-xs rounded bg-gray-50 dark:bg-navy-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:border-gold">
+                                        <option value="Residential">Residential</option>
+                                        <option value="Commercial">Commercial</option>
+                                        <option value="Interior">Interior</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold uppercase text-gray-500 dark:text-gray-400 mb-1">Status</label>
+                                    <select value={newProjStatus} onChange={(e) => setNewProjStatus(e.target.value)} className="w-full p-2.5 text-xs rounded bg-gray-50 dark:bg-navy-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:border-gold">
+                                        <option value="Ongoing">Ongoing</option>
+                                        <option value="Completed">Completed</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold uppercase text-gray-500 dark:text-gray-400 mb-1">Image Filename</label>
+                                    <input type="text" value={newProjImage} onChange={(e) => setNewProjImage(e.target.value)} placeholder="e.g. project2.jpeg" className="w-full p-2.5 text-xs rounded bg-gray-50 dark:bg-navy-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:border-gold" />
+                                </div>
+                                <button type="submit" className="w-full bg-gold hover:bg-gold-light text-navy-dark font-bold py-3 rounded text-xs uppercase tracking-wider shadow transition">
+                                    Publish New Project
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // Home View Component
         function HomeView({ setActiveTab, projects, enquiries }) {
             const albumImages = [
                 { src: "gallery6.jpeg", title: "Multi-Storey Structural Execution" },
@@ -294,7 +544,6 @@
 
             const [currentIndex, setCurrentIndex] = useState(0);
 
-            // Auto Image Change Logic (Every 3 seconds)
             useEffect(() => {
                 const interval = setInterval(() => {
                     setCurrentIndex((prevIndex) => (prevIndex + 1) % albumImages.length);
@@ -310,22 +559,17 @@
                 setCurrentIndex((prev) => (prev + 1) % albumImages.length);
             };
 
-
             return (
                 <div>
-                    {/* Auto Slideshow Banner */}
                     <div className="relative text-white py-24 md:py-32 px-4 text-center overflow-hidden min-h-[500px] flex items-center justify-center">
-                        {/* Background Slideshow Images */}
                         {albumImages.map((img, index) => (
                             <div
                                 key={index}
-                                className={`absolute inset-0 bg-cover bg-center transition-opacity duration-1000 ease-in-out ${index === currentIndex ? 'opacity-100 scale-105 transition-transform duration-5000' : 'opacity-0 scale-100'
-                                    }`}
+                                className={`absolute inset-0 bg-cover bg-center transition-opacity duration-1000 ease-in-out ${index === currentIndex ? 'opacity-100 scale-105 transition-transform duration-5000' : 'opacity-0 scale-100'}`}
                                 style={{ backgroundImage: `linear-gradient(rgba(7, 26, 51, 0.75), rgba(7, 26, 51, 0.85)), url('${img.src}')` }}
                             />
                         ))}
 
-                        {/* Banner Content */}
                         <div className="max-w-4xl mx-auto relative z-10">
                             <h1 className="text-4xl md:text-6xl font-extrabold mb-4 drop-shadow-md">
                                 Welcome to Vaishnavi Construction's
@@ -349,7 +593,6 @@
                             </div>
                         </div>
 
-                        {/* Navigation Buttons for Manual Slide */}
                         <button onClick={prevSlide} className="absolute left-4 z-20 text-white/70 hover:text-white text-2xl bg-black/30 hover:bg-black/60 p-3 rounded-full transition">
                             <i className="fas fa-chevron-left"></i>
                         </button>
@@ -357,27 +600,22 @@
                             <i className="fas fa-chevron-right"></i>
                         </button>
 
-                        {/* Dots Indicator */}
                         <div className="absolute bottom-4 left-0 right-0 z-20 flex justify-center gap-2">
                             {albumImages.map((_, idx) => (
                                 <button
                                     key={idx}
                                     onClick={() => setCurrentIndex(idx)}
-                                    className={`h-2.5 rounded-full transition-all ${idx === currentIndex ? 'w-8 bg-gold' : 'w-2.5 bg-white/50'
-                                        }`}
+                                    className={`h-2.5 rounded-full transition-all ${idx === currentIndex ? 'w-8 bg-gold' : 'w-2.5 bg-white/50'}`}
                                 />
                             ))}
                         </div>
                     </div>
 
-                    {/* Stats Bar */}
-
-                    <div className="bg-white dark:bg-navy p-6 rounded shadow border border-gray-200 dark:border-gray-800 text-center">
+                    <div className="max-w-md mx-auto my-8 bg-white dark:bg-navy p-6 rounded shadow border border-gray-200 dark:border-gray-800 text-center">
                         <h3 className="text-3xl font-black text-gold">{enquiries.length}</h3>
                         <p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold mt-1">Recorded Inquiries</p>
                     </div>
                 </div>
-
             );
         }
 
@@ -394,13 +632,12 @@
                             Our Identity & Legacy
                         </h3>
                         <p className="text-sm md:text-base leading-relaxed text-gray-700 dark:text-gray-300">
-                            Established in the year 2025 under the dynamic leadership of Mr. Er. Aashutosh Kumar Shukla, Vaishnavi Construction's is now a multidisciplinary construction company with a rich legacy of delivering world-class Construction projects[cite: 3]. Born with a vision to "Build Better India", Vaishnavi Construction's has been consistently pushing the boundaries of Innovation, Quality, Craftsmanship, Speed of execution and thereby building projects with a long-term value creation for its client.
+                            Established in the year 2025 under the dynamic leadership of Mr. Er. Aashutosh Kumar Shukla, Vaishnavi Construction's is now a multidisciplinary construction company with a rich legacy of delivering world-class Construction projects. Born with a vision to "Build Better India", Vaishnavi Construction's has been consistently pushing the boundaries of Innovation, Quality, Craftsmanship, Speed of execution and thereby building projects with a long-term value creation for its client.
                         </p>
                     </div>
 
                     <h3 className="text-xl font-bold mb-6 text-gold text-center md:text-left">Leadership Team</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
-
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                         <div className="bg-white dark:bg-navy p-6 rounded shadow border border-gray-200 dark:border-gray-800 flex flex-col items-center">
                             <img
                                 src="mahima-devi.jpg"
@@ -424,6 +661,7 @@
                             <p className="text-xs text-gold text-center font-semibold mb-3">Managing Director</p>
                             <p className="text-xs text-gray-500 dark:text-gray-400 text-center">Heading engineering execution, civil operations, and technical excellence.</p>
                         </div>
+
                         <div className="bg-white dark:bg-navy p-6 rounded shadow border border-gray-200 dark:border-gray-800 flex flex-col items-center">
                             <img
                                 src="vinay-verma.jpg"
@@ -435,7 +673,7 @@
                             <p className="text-xs text-gold text-center font-semibold mb-3">Business Head</p>
                             <p className="text-xs text-gray-500 dark:text-gray-400 text-center">Managing client relationships, commercial estimations, and expansion strategy.</p>
                         </div>
-                        {/* Er. Himanshu Singh Profile Card with Portfolio Link */}
+
                         <div className="bg-white dark:bg-navy p-6 rounded shadow border border-gray-200 dark:border-gray-800 flex flex-col items-center group transition duration-300 hover:border-gold">
                             <a href="https://himanshu-wheat.vercel.app/" target="_blank" rel="noopener noreferrer" className="block text-center">
                                 <img
@@ -444,27 +682,16 @@
                                     className="w-28 h-28 rounded-full object-cover border-4 border-gold mb-4 shadow-md transition-transform duration-300 group-hover:scale-105"
                                     onError={(e) => { e.target.onerror = null; e.target.src = "https://via.placeholder.com/112?text=HS"; }}
                                 />
-                                <h4 className="text-lg font-bold text-center group-hover:text-gold transition-colors flex items-center justify-center gap-1">
+                                <h4 className="text-lg font-bold text-center group-hover:text-gold transition-colors">
                                     Er. Himanshu Singh
-
                                 </h4>
                             </a>
                             <p className="text-xs text-gold text-center font-semibold mb-3">IT Head</p>
                             <p className="text-xs text-gray-500 dark:text-gray-400 text-center mb-4">Managing technology infrastructure, digital systems, and web operations.</p>
-                            <a
-                                href="https://himanshu-wheat.vercel.app/"
-                                target="_blank"
-                                rel="noopener noreferrer"
-
-
-                            >
-
-                            </a>
                         </div>
-
                     </div>
 
-                    <div className=" mt-6 bg-navy-dark text-white p-6 rounded-lg shadow-lg border border-gold /30 flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div className="mt-6 bg-navy-dark text-white p-6 rounded-lg shadow-lg border border-gold/30 flex flex-col md:flex-row justify-between items-center gap-4">
                         <div>
                             <span className="text-gold text-xs font-bold uppercase tracking-wider block mb-1">Official Document</span>
                             <h4 className="text-lg font-bold">GST Registration Certificate</h4>
@@ -480,7 +707,6 @@
                             View / Download GST Certificate
                         </a>
                     </div>
-
                 </div>
             );
         }
@@ -503,13 +729,11 @@
                                             e.target.style.display = 'none';
                                             e.target.nextElementSibling.style.display = 'flex';
                                         }}
-
                                     />
                                     <div className="hidden absolute inset-0 items-center justify-center text-gray-500 bg-gray-200 dark:bg-navy-dark">
                                         <i className="fas fa-building text-4xl text-gold"></i>
                                     </div>
-                                    <span className={`absolute top-3 right-3 text-[10px] px-2.5 py-1 rounded font-bold uppercase shadow ${p.status === 'Completed' ? 'bg-green-600 text-white' : 'bg-amber-500 text-navy-dark'
-                                        }`}>
+                                    <span className={`absolute top-3 right-3 text-[10px] px-2.5 py-1 rounded font-bold uppercase shadow ${p.status === 'Completed' ? 'bg-green-600 text-white' : 'bg-amber-500 text-navy-dark'}`}>
                                         {p.status}
                                     </span>
                                 </div>
@@ -517,9 +741,6 @@
                                     <div>
                                         <span className="text-[10px] bg-gold/20 text-gold px-2 py-0.5 rounded font-bold uppercase">{p.category}</span>
                                         <h3 className="text-lg font-bold mt-2">{p.title}</h3>
-                                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                    
-                                        </p>
                                     </div>
                                 </div>
                             </div>
@@ -627,44 +848,6 @@
                 </div>
             );
         }
-
-        // Dashboard View Component
-         function DashboardView({ enquiries, projects, setProjects }) {
-                return (
-                    <div className="max-w-7xl mx-auto px-4 py-12">
-                        <h2 className="text-3xl font-black mb-6">Admin Dashboard</h2>
-                        <div className="bg-white dark:bg-navy p-6 rounded-2xl shadow-xl border border-gray-200 dark:border-navy-light/40">
-                            <h3 className="text-xl font-bold mb-4">Recorded Enquiries</h3>
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-left text-xs">
-                                    <thead>
-                                        <tr className="border-b border-gray-200 dark:border-navy-light/40 text-gold">
-                                            <th className="p-3">Name</th>
-                                            <th className="p-3">Phone</th>
-                                            <th className="p-3">Email</th>
-                                            <th className="p-3">Project</th>
-                                            <th className="p-3">Location</th>
-                                            <th className="p-3">Date</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {enquiries.map(e => (
-                                            <tr key={e.id} className="border-b border-gray-100 dark:border-navy-light/20">
-                                                <td className="p-3 font-bold">{e.name}</td>
-                                                <td className="p-3">{e.phone}</td>
-                                                <td className="p-3">{e.email}</td>
-                                                <td className="p-3">{e.project}</td>
-                                                <td className="p-3">{e.location}</td>
-                                                <td className="p-3">{e.date}</td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                );
-            }
 
         ReactDOM.createRoot(document.getElementById('root')).render(<App />);
     </script>
