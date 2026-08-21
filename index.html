@@ -400,16 +400,31 @@
                             <p className="text-xs text-gold text-center font-semibold mb-3">Business Head</p>
                             <p className="text-xs text-gray-500 dark:text-gray-400 text-center">Managing client relationships, commercial estimations, and expansion strategy.</p>
                         </div>
-                        <div className="bg-white dark:bg-navy p-6 rounded shadow border border-gray-200 dark:border-gray-800 flex flex-col items-center">
-                            <img
-                                src="himanshuimage.jpg"
-                                alt="Er. Himanshu Singh"
-                                className="w-28 h-28 rounded-full object-cover border-4 border-gold mb-4 shadow-md"
-                                onError={(e) => { e.target.onerror = null; e.target.src = "https://via.placeholder.com/112?text=HS"; }}
-                            />
-                            <h4 className="text-lg font-bold text-center">Er. Himanshu Singh</h4>
+                          {/* Er. Himanshu Singh Profile Card with Portfolio Link */}
+                        <div className="bg-white dark:bg-navy p-6 rounded shadow border border-gray-200 dark:border-gray-800 flex flex-col items-center group transition duration-300 hover:border-gold">
+                            <a href="https://himanshu-wheat.vercel.app/" target="_blank" rel="noopener noreferrer" className="block text-center">
+                                <img
+                                    src="himanshuimage.jpg"
+                                    alt="Er. Himanshu Singh"
+                                    className="w-28 h-28 rounded-full object-cover border-4 border-gold mb-4 shadow-md transition-transform duration-300 group-hover:scale-105"
+                                    onError={(e) => { e.target.onerror = null; e.target.src = "https://via.placeholder.com/112?text=HS"; }}
+                                />
+                                <h4 className="text-lg font-bold text-center group-hover:text-gold transition-colors flex items-center justify-center gap-1">
+                                    Er. Himanshu Singh
+                                
+                                </h4>
+                            </a>
                             <p className="text-xs text-gold text-center font-semibold mb-3">IT Head</p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 text-center">Managing technology infrastructure, digital systems, and web operations.</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 text-center mb-4">Managing technology infrastructure, digital systems, and web operations.</p>
+                            <a
+                                href="https://himanshu-wheat.vercel.app/"
+                                target="_blank"
+                                 rel="noopener noreferrer"
+                               
+
+                            >
+
+                            </a>
                         </div>
 
                     </div>
