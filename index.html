@@ -31,7 +31,7 @@
     <script type="text/javascript">
             (function () {
                 // EmailJS Public Key Initialized
-                emailjs.init("hDg_hBnS8ZTbmwDEZ");
+                emailjs.init("DVmugMKGhBS1BC6uW");
             })();
     </script>
 
@@ -118,7 +118,7 @@
                 setEnquiries(updatedEnquiries);
                 localStorage.setItem('vaishnavi_enquiries', JSON.stringify(updatedEnquiries));
 
-                emailjs.send("212306", "template_9ucubup", enquiryData)
+                emailjs.send("@2025", "template_nhbebfv", enquiryData)
                     .then((result) => {
                         alert("Dhanyawad! Aapki enquiry save ho gayi hai.");
                         form.reset();
