@@ -620,6 +620,7 @@
         }
 
         // About View Component
+       // About View Component
         function AboutView() {
             return (
                 <div className="max-w-7xl mx-auto px-4 py-12">
@@ -632,12 +633,12 @@
                             Our Identity & Legacy
                         </h3>
                         <p className="text-sm md:text-base leading-relaxed text-gray-700 dark:text-gray-300">
-                            Established in the year 2025 under the dynamic leadership of Mr. Er. Aashutosh Kumar Shukla, Vaishnavi Construction's is now a multidisciplinary construction company with a rich legacy of delivering world-class Construction projects. Born with a vision to "Build Better India", Vaishnavi Construction's has been consistently pushing the boundaries of Innovation, Quality, Craftsmanship, Speed of execution and thereby building projects with a long-term value creation for its client.
+                            Established in the year 2025 under the dynamic leadership of Mr. Er.AK Shukla, Vaishnavi Construction's is now a multidisciplinary construction company with a rich legacy of delivering world-class Construction projects. Born with a vision to "Build Better India", Vaishnavi Construction's has been consistently pushing the boundaries of Innovation, Quality, Craftsmanship, Speed of execution and thereby building projects with a long-term value creation for its client.
                         </p>
                     </div>
 
                     <h3 className="text-xl font-bold mb-6 text-gold text-center md:text-left">Leadership Team</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         <div className="bg-white dark:bg-navy p-6 rounded shadow border border-gray-200 dark:border-gray-800 flex flex-col items-center">
                             <img
                                 src="mahima-devi.jpg"
@@ -653,14 +654,15 @@
                         <div className="bg-white dark:bg-navy p-6 rounded shadow border border-gray-200 dark:border-gray-800 flex flex-col items-center">
                             <img
                                 src="aashutosh-shukla.jpg"
-                                alt="Er. AK Shukla"
+                                alt="Er. Aashutosh Kumar Shukla"
                                 className="w-28 h-28 rounded-full object-cover border-4 border-gold mb-4 shadow-md"
                                 onError={(e) => { e.target.onerror = null; e.target.src = "https://via.placeholder.com/112?text=AS"; }}
                             />
-                            <h4 className="text-lg font-bold text-center">Er. AK Shukla</h4>
+                            <h4 className="text-lg font-bold text-center">Er.AK Shukla</h4>
                             <p className="text-xs text-gold text-center font-semibold mb-3">Managing Director</p>
                             <p className="text-xs text-gray-500 dark:text-gray-400 text-center">Heading engineering execution, civil operations, and technical excellence.</p>
                         </div>
+                    
 
                         <div className="bg-white dark:bg-navy p-6 rounded shadow border border-gray-200 dark:border-gray-800 flex flex-col items-center">
                             <img
@@ -689,7 +691,20 @@
                             <p className="text-xs text-gold text-center font-semibold mb-3">IT Head</p>
                             <p className="text-xs text-gray-500 dark:text-gray-400 text-center mb-4">Managing technology infrastructure, digital systems, and web operations.</p>
                         </div>
+                        <div className="bg-white dark:bg-navy p-6 rounded shadow border border-gray-200 dark:border-gray-800 flex flex-col items-center">
+                            <img
+                                src="Ajeet-Mishra.png"
+                                alt="Ajeet Kumar Mishra"
+                                className="w-28 h-28 rounded-full object-cover border-4 border-gold mb-4 shadow-md"
+                                onError={(e) => { e.target.onerror = null; e.target.src = "https://via.placeholder.com/112?text=MD"; }}
+                            />
+                            <h4 className="text-lg font-bold text-center">Ajeet Kumar Mishra</h4>
+                            <p className="text-xs text-gold text-center font-semibold mb-3">Accountant</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 text-center">Overseeing accounting and financial operations at Vaishnavi Construction.</p>
+                        </div>
                     </div>
+
+                                    
 
                     <div className="mt-6 bg-navy-dark text-white p-6 rounded-lg shadow-lg border border-gold/30 flex flex-col md:flex-row justify-between items-center gap-4">
                         <div>
