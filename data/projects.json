@@ -1,0 +1,16 @@
+[
+  {
+    "id": 1,
+    "title": "Commercial Complex",
+    "category": "Commercial",
+    "status": "Ongoing",
+    "image": "incompleted.jpeg"
+  },
+  {
+    "id": 2,
+    "title": "Luxury Villa Design",
+    "category": "Residential",
+    "status": "Completed",
+    "image": "project2.jpeg"
+  }
+]

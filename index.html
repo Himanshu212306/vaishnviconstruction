@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VAISHNAVI CONSTRUCTION - We Build Your Dream</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        navy: { dark: '#071A33', DEFAULT: '#102A43', bgDark: '#08111F' },
+                        gold: { DEFAULT: '#C98200', light: '#E0A12B' }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- React & Babel CDNs -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .floating-bubbles {
+            position: absolute;
+            inset: 0;
+            overflow: hidden;
+            pointer-events: none;
+            opacity: 0.7;
+        }
+
+        .floating-bubble {
+            position: absolute;
+            bottom: -120px;
+            width: 56px;
+            height: 56px;
+            border: 1px solid rgba(201, 130, 0, 0.22);
+            border-radius: 9999px;
+            background: radial-gradient(circle at 30% 25%, rgba(255, 255, 255, 0.45), rgba(201, 130, 0, 0.08) 38%, rgba(16, 42, 67, 0.03) 70%);
+            box-shadow: inset 0 0 18px rgba(255, 255, 255, 0.16), 0 0 24px rgba(201, 130, 0, 0.08);
+            animation: bubble-rise 18s linear infinite;
+        }
+
+        .floating-bubble:nth-child(1) {
+            left: 8%;
+            animation-delay: -3s;
+            transform: scale(0.75);
+        }
+
+        .floating-bubble:nth-child(2) {
+            left: 24%;
+            animation-delay: -11s;
+            transform: scale(1.35);
+        }
+
+        .floating-bubble:nth-child(3) {
+            left: 43%;
+            animation-delay: -7s;
+            transform: scale(0.55);
+        }
+
+        .floating-bubble:nth-child(4) {
+            left: 61%;
+            animation-delay: -15s;
+            transform: scale(1.05);
+        }
+
+        .floating-bubble:nth-child(5) {
+            left: 78%;
+            animation-delay: -5s;
+            transform: scale(0.7);
+        }
+
+        .floating-bubble:nth-child(6) {
+            left: 92%;
+            animation-delay: -13s;
+            transform: scale(1.5);
+        }
+
+        @keyframes bubble-rise {
+            0% {
+                translate: 0 0;
+                opacity: 0;
+            }
+
+            12% {
+                opacity: 0.8;
+            }
+
+            50% {
+                translate: 32px -50vh;
+            }
+
+            88% {
+                opacity: 0.45;
+            }
+
+            100% {
+                translate: -24px -115vh;
+                opacity: 0;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .floating-bubble {
+                animation: none;
+                opacity: 0.25;
+            }
+        }
+    </style>
+    <!-- EmailJS SDK Integration -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script type="text/javascript">
+            (function () {
+                // EmailJS Public Key Initialized
+                emailjs.init("DVmugMKGhBS1BC6uW");
+            })();
+    </script>
+
+</head>
+
+<body class="bg-gray-50 text-gray-900 dark:bg-navy-bgDark dark:text-gray-100 transition-colors duration-300 font-sans">
+
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        const PROJECTS_API = '/api/projects';
+
+        function App() {
+            const [darkMode, setDarkMode] = useState(false);
+            const [activeTab, setActiveTab] = useState('home');
+            const [scrolled, setScrolled] = useState(false);
+            const [menuOpen, setMenuOpen] = useState(false);
+
+            // Enquiries State
+            const [enquiries, setEnquiries] = useState(() => {
+                const savedData = localStorage.getItem('vaishnavi_enquiries');
+                return savedData ? JSON.parse(savedData) : [
+                    { id: 1, name: "Himanshu Singh", phone: "9838667430", email: "Himanshu@gmail.com", project: "Residential", location: "Mirzapur", status: "New", date: "2026-08-18" }
+                ];
+            });
+
+            // Projects State
+            const [projects, setProjects] = useState(() => {
+                const savedProjects = localStorage.getItem('vaishnavi_projects');
+                return savedProjects ? JSON.parse(savedProjects) : [
+                    {
+                        id: 1,
+                        title: "Commercial Complex",
+                        category: "Commercial",
+                        status: "Ongoing",
+                        image: "incompleted.jpeg"
+                    },
+                    {
+                        id: 2,
+                        title: "Luxury Villa Design",
+                        category: "Residential",
+                        status: "Completed",
+                        image: "project2.jpeg"
+                    }
+                ];
+            });
+
+            const saveProjects = (updatedProjects) => {
+                return fetch(PROJECTS_API, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updatedProjects)
+                }).then(response => {
+                    if (!response.ok) throw new Error('Project save failed');
+                    setProjects(updatedProjects);
+                    localStorage.setItem('vaishnavi_projects', JSON.stringify(updatedProjects));
+                    return response.json();
+                });
+            };
+
+            useEffect(() => {
+                const handleScroll = () => setScrolled(window.scrollY > 40);
+                window.addEventListener('scroll', handleScroll);
+                return () => window.removeEventListener('scroll', handleScroll);
+            }, []);
+
+            useEffect(() => {
+                fetch(PROJECTS_API)
+                    .then(response => response.ok ? response.json() : Promise.reject())
+                    .then(serverProjects => {
+                        setProjects(serverProjects);
+                        localStorage.setItem('vaishnavi_projects', JSON.stringify(serverProjects));
+                    })
+                    .catch(() => {});
+            }, []);
+
+            const toggleDarkMode = () => {
+                setDarkMode(!darkMode);
+                document.documentElement.classList.toggle('dark');
+            };
+
+            const handleFormSubmit = (e) => {
+                e.preventDefault();
+                const form = e.target;
+                const formData = new FormData(form);
+
+                const enquiryData = {
+                    from_name: formData.get('name'),
+                    from_phone: formData.get('phone'),
+                    from_email: formData.get('email'),
+                    project_type: formData.get('projectType'),
+                    location: formData.get('location')
+                };
+
+                const newEnquiry = {
+                    id: Date.now(),
+                    name: enquiryData.from_name,
+                    phone: enquiryData.from_phone,
+                    email: enquiryData.from_email,
+                    project: enquiryData.project_type,
+                    location: enquiryData.location,
+                    status: 'New',
+                    date: new Date().toISOString().split('T')[0]
+                };
+
+                const updatedEnquiries = [newEnquiry, ...enquiries];
+                setEnquiries(updatedEnquiries);
+                localStorage.setItem('vaishnavi_enquiries', JSON.stringify(updatedEnquiries));
+
+                emailjs.send("@2025", "template_nhbebfv", enquiryData)
+                    .then((result) => {
+                        alert("Dhanyawad! Aapki enquiry save ho gayi hai.");
+                        form.reset();
+                    }, (error) => {
+                        alert("Form Save ho gaya! Email bhejte waqt dikkat aayi.");
+                        form.reset();
+                    });
+            };
+
+            return (
+                <div className="min-h-screen flex flex-col justify-between">
+
+                    {/* Top Contact Bar */}
+                    <div className="bg-navy-dark text-gray-300 text-xs py-2 px-4 border-b border-navy">
+                        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-2">
+                            <div>
+                                <span className="mr-4"><i className="fas fa-building text-gold mr-1"></i> GSTIN: <strong className="text-white">09KKIPD7664H1ZL</strong></span>
+                                <span><i className="fas fa-map-marker-alt text-gold mr-1"></i> Mirzapur, Uttar Pradesh</span>
+                            </div>
+                            <div className="flex gap-4">
+                                <a href="tel:+917009118341" className="hover:text-gold"><i className="fas fa-phone mr-1"></i> +91 7009118341</a>
+                                <a href="mailto:vs3031100@gmail.com" className="hover:text-gold"><i className="fas fa-envelope mr-1"></i> vs3031100@gmail.com</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Navigation */}
+                    <nav className={`sticky top-0 z-40 transition-all duration-300 ${scrolled
+                        ? 'bg-navy-dark text-white shadow-lg py-2'
+                        : 'bg-navy text-white py-3'
+                        }`}>
+                        <div className="max-w-7xl mx-auto px-4 flex justify-between items-center">
+                            <div className="flex items-center gap-3 cursor-pointer" onClick={() => setActiveTab('home')}>
+                                <img
+                                    src="logo.png"
+                                    alt="Vaishnavi Construction Logo"
+                                    className="w-12 h-12 rounded-full object-cover border-2 border-gold bg-white"
+                                    onError={(e) => { e.target.onerror = null; e.target.src = "https://via.placeholder.com/50?text=VC"; }}
+                                />
+                                <div>
+                                    <span className="font-extrabold tracking-wider text-lg block leading-tight">VAISHNAVI</span>
+                                    <span className="text-[9px] text-gold font-bold tracking-widest block uppercase">Construction's</span>
+                                </div>
+                            </div>
+
+                            {/* Desktop Navigation */}
+                            <div className="hidden md:flex items-center gap-6 text-sm font-medium">
+                                {['home', 'about', 'projects', 'services', 'gallery', 'contact', 'admin'].map(tab => (
+                                    <button
+                                        key={tab}
+                                        onClick={() => setActiveTab(tab)}
+                                        className={`capitalize transition-colors ${activeTab === tab ? 'text-gold font-bold border-b-2 border-gold pb-1' : 'hover:text-gold'}`}
+                                    >
+                                        {tab === 'admin' ? 'Admin Portal' : tab}
+                                    </button>
+                                ))}
+                                <button onClick={toggleDarkMode} className="p-2 text-gold hover:text-white">
+                                    <i className={`fas ${darkMode ? 'fa-sun' : 'fa-moon'}`}></i>
+                                </button>
+                                <button onClick={() => setActiveTab('contact')} className="bg-gold hover:bg-gold-light text-navy-dark font-bold px-4 py-2 rounded shadow">
+                                    Get a Quote
+                                </button>
+                            </div>
+
+                            {/* Mobile Menu Button */}
+                            <div className="md:hidden flex items-center gap-3">
+                                <button onClick={toggleDarkMode} className="p-2 text-gold">
+                                    <i className={`fas ${darkMode ? 'fa-sun' : 'fa-moon'}`}></i>
+                                </button>
+                                <button onClick={() => setMenuOpen(!menuOpen)} className="text-white text-xl">
+                                    <i className={`fas ${menuOpen ? 'fa-times' : 'fa-bars'}`}></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Mobile Drawer */}
+                        {menuOpen && (
+                            <div className="md:hidden bg-navy-dark text-white p-4 space-y-3 border-t border-gray-800">
+                                {['home', 'about', 'projects', 'services', 'gallery', 'contact', 'admin'].map(tab => (
+                                    <button
+                                        key={tab}
+                                        onClick={() => { setActiveTab(tab); setMenuOpen(false); }}
+                                        className="block w-full text-left capitalize py-1 text-sm font-medium hover:text-gold"
+                                    >
+                                        {tab === 'admin' ? 'Admin Portal' : tab}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </nav>
+
+                    {/* Page Content Rendering */}
+                    <main className="flex-grow relative overflow-hidden">
+                        {activeTab !== 'home' && <div className="floating-bubbles" aria-hidden="true">
+                            <span className="floating-bubble"></span><span className="floating-bubble"></span><span className="floating-bubble"></span>
+                            <span className="floating-bubble"></span><span className="floating-bubble"></span><span className="floating-bubble"></span>
+                        </div>}
+                        {activeTab === 'home' && <HomeView setActiveTab={setActiveTab} projects={projects} enquiries={enquiries} />}
+                        <div className="relative z-10">
+                            {activeTab === 'about' && <AboutView />}
+                            {activeTab === 'projects' && <ProjectsView projects={projects} />}
+                            {activeTab === 'services' && <ServicesView />}
+                            {activeTab === 'gallery' && <GalleryView />}
+                            {activeTab === 'contact' && <ContactView handleFormSubmit={handleFormSubmit} />}
+                            {activeTab === 'admin' && <AdminPortalView enquiries={enquiries} setEnquiries={setEnquiries} projects={projects} setProjects={setProjects} saveProjects={saveProjects} />}
+                        </div>
+                    </main>
+
+                    {/* Floating WhatsApp CTA */}
+                    <a
+                        href="https://wa.me/919302154350?text=Hello%20Vaishnavi%20Construction,%20I%20would%20like%20to%20discuss%20a%20construction%20project."
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="fixed bottom-6 right-6 z-50 bg-green-500 text-white p-4 rounded-full shadow-2xl hover:scale-110 transition flex items-center justify-center"
+                        aria-label="WhatsApp"
+                    >
+                        <i className="fab fa-whatsapp text-2xl"></i>
+                    </a>
+
+                    {/* Footer */}
+                    <footer className="bg-navy-dark text-gray-300 py-12 border-t border-navy">
+                        <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+                            <div>
+                                <div className="flex items-center gap-2 mb-2">
+                                    <img
+                                        src="logo.png"
+                                        alt="Logo"
+                                        className="w-8 h-8 rounded-full border border-gold object-cover bg-white"
+                                        onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; }}
+                                    />
+                                    <h3 className="text-white font-extrabold text-lg">VAISHNAVI CONSTRUCTION's</h3>
+                                </div>
+                                <p className="text-gold font-semibold text-xs mb-3">WE BUILD YOUR DREAM</p>
+                                <p className="text-xs text-gray-400">Delivering quality engineering, architectural planning, and infrastructure development.</p>
+                            </div>
+                            <div>
+                                <h4 className="text-white font-bold text-sm mb-3">Quick Links</h4>
+                                <div className="flex flex-col space-y-1 text-xs">
+                                    <a onClick={() => setActiveTab('home')} className="hover:text-gold cursor-pointer">Home</a>
+                                    <a onClick={() => setActiveTab('about')} className="hover:text-gold cursor-pointer">About Us</a>
+                                    <a onClick={() => setActiveTab('projects')} className="hover:text-gold cursor-pointer">Projects</a>
+                                    <a onClick={() => setActiveTab('contact')} className="hover:text-gold cursor-pointer">Contact</a>
+                                    <a onClick={() => setActiveTab('admin')} className="hover:text-gold cursor-pointer text-gold font-bold">Admin Portal Login</a>
+                                </div>
+                            </div>
+                            <div>
+                                <h4 className="text-white font-bold text-sm mb-3">Contact Info</h4>
+                                <p className="text-xs text-gray-400">Arjunpur Pathak, Dewari (Amghat), Mirzapur, UP - 231001</p>
+                                <p className="text-xs mt-2"><a href="tel:+7009118341" className="hover:text-gold">+917009118341</a> / <a href="tel:+919555754273" className="hover:text-gold">+91 95557 54273</a></p>
+                                <p className="text-xs mt-1"><a href="mailto:vs3031100@gmail.com" className="hover:text-gold">vs3031100@gmail.com</a></p>
+                            </div>
+                            <div>
+                                <h4 className="text-white font-bold text-sm mb-3">Follow Us</h4>
+                                <div className="flex gap-4 text-lg">
+                                    <a href="https://www.facebook.com/share/1CSeR7cLac/" target="_blank" className="hover:text-gold"><i className="fab fa-facebook"></i></a>
+                                    <a href="https://www.linkedin.com/in/vaishnavi-construction-s-a458b142a" target="_blank" className="hover:text-gold"><i className="fab fa-linkedin"></i></a>
+                                    <a href="https://www.instagram.com/vaish_naviconstruction?igsh=MTFlZHR6eXdxZm5lZA==" target="_blank" className="hover:text-gold"><i className="fab fa-instagram"></i></a>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="text-center text-xs text-gray-500 border-t border-gray-800 pt-4">
+                            © VAISHNAVI CONSTRUCTION's. All Rights Reserved.
+                        </div>
+                    </footer>
+
+                </div>
+            );
+        }
+
+        // --- FULL ADMIN PORTAL MANAGEMENT COMPONENT ---
+        function AdminPortalView({ enquiries, setEnquiries, projects, setProjects, saveProjects }) {
+            const [isAuthenticated, setIsAuthenticated] = useState(false);
+            const [password, setPassword] = useState('');
+            const [loginError, setLoginError] = useState('');
+
+            // New Project Form State
+            const [newProjTitle, setNewProjTitle] = useState('');
+            const [newProjCategory, setNewProjCategory] = useState('Residential');
+            const [newProjStatus, setNewProjStatus] = useState('Ongoing');
+            const [newProjImage, setNewProjImage] = useState('');
+            const [newProjImageName, setNewProjImageName] = useState('');
+
+            // Admin Login Handler (Passcode: 12345)
+            const handleLogin = (e) => {
+                e.preventDefault();
+                if (password === 'Vaishnavi@2025') {
+                    setIsAuthenticated(true);
+                    setLoginError('');
+                } else {
+                    setLoginError('Sahi password daalein! (Default Pass: 12345)');
+                }
+            };
+
+            // Update Client Enquiry Status
+            const handleStatusChange = (id, newStatus) => {
+                const updated = enquiries.map(item => item.id === id ? { ...item, status: newStatus } : item);
+                setEnquiries(updated);
+                localStorage.setItem('vaishnavi_enquiries', JSON.stringify(updated));
+            };
+
+            // Delete Client Enquiry
+            const handleDeleteEnquiry = (id) => {
+                if (window.confirm("Kya aap is inquiry ko delete karna chahte hain?")) {
+                    const updated = enquiries.filter(item => item.id !== id);
+                    setEnquiries(updated);
+                    localStorage.setItem('vaishnavi_enquiries', JSON.stringify(updated));
+                }
+            };
+
+            // Add New Project
+            const handleAddProject = (e) => {
+                e.preventDefault();
+                if (!newProjTitle) return;
+
+                const newProj = {
+                    id: Date.now(),
+                    title: newProjTitle,
+                    category: newProjCategory,
+                    status: newProjStatus,
+                    image: newProjImage || 'incompleted.jpeg'
+                };
+
+                const updatedProjects = [newProj, ...projects];
+                saveProjects(updatedProjects)
+                    .then(() => {
+                        setNewProjTitle('');
+                        setNewProjImage('');
+                        setNewProjImageName('');
+                        alert("Project Safaltapoorvak Add Ho Gaya!");
+                    })
+                    .catch(() => alert("Project save nahi ho paya. Vercel me MONGODB_URI check karein."));
+            };
+
+            const handleProjectImageChange = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                if (!file.type.startsWith('image/')) {
+                    alert('Please select an image file.');
+                    e.target.value = '';
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = () => {
+                    setNewProjImage(reader.result);
+                    setNewProjImageName(file.name);
+                };
+                reader.readAsDataURL(file);
+            };
+
+            // Toggle Project Status
+            const handleProjectStatusToggle = (id) => {
+                const updated = projects.map(p => {
+                    if (p.id === id) {
+                        return { ...p, status: p.status === 'Ongoing' ? 'Completed' : 'Ongoing' };
+                    }
+                    return p;
+                });
+                saveProjects(updated).catch(() => alert("Status update nahi ho paya. Vercel me MONGODB_URI check karein."));
+            };
+
+            // Delete Project
+            const handleDeleteProject = (id) => {
+                if (window.confirm("Kya aap is project ko website se hatana chahte hain?")) {
+                    const updated = projects.filter(p => p.id !== id);
+                    saveProjects(updated).catch(() => alert("Project delete nahi ho paya. Vercel me MONGODB_URI check karein."));
+                }
+            };
+
+            if (!isAuthenticated) {
+                return (
+                    <div className="max-w-md mx-auto my-8 px-4">
+                        <div className="bg-white dark:bg-navy p-8 rounded-xl shadow-xl border border-gray-200 dark:border-gray-800 text-center">
+                            <div className="w-16 h-16 bg-gold/10 text-gold rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                                <i className="fas fa-user-shield"></i>
+                            </div>
+                            <h2 className="text-2xl font-black mb-1">Admin Portal Access</h2>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-6">Management authentication required</p>
+
+                            <form onSubmit={handleLogin} className="space-y-4">
+                                <div>
+                                    <input
+                                        type="password"
+                                        placeholder="Enter Passcode (Default: 12345)"
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        className="w-full p-3 text-sm rounded bg-gray-50 dark:bg-navy-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:border-gold text-center font-mono"
+                                        required
+                                    />
+                                </div>
+                                {loginError && <p className="text-red-500 text-xs font-semibold">{loginError}</p>}
+                                <button type="submit" className="w-full bg-gold hover:bg-gold-light text-navy-dark font-bold py-3 rounded shadow uppercase text-xs tracking-wider transition">
+                                    Login to Admin Dashboard
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="max-w-7xl mx-auto px-4 py-12">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4 border-b border-gray-200 dark:border-gray-800 pb-4">
+                        <div>
+                            <span className="text-gold font-bold text-xs uppercase tracking-widest">Control Center</span>
+                            <h2 className="text-3xl font-black">Admin Management Dashboard</h2>
+                        </div>
+                        <button onClick={() => setIsAuthenticated(false)} className="bg-red-600 hover:bg-red-700 text-white text-xs font-bold px-4 py-2 rounded shadow transition flex items-center gap-2">
+                            <i className="fas fa-sign-out-alt"></i> Logout Admin
+                        </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        {/* Section 1: Enquiries Table */}
+                        <div className="lg:col-span-2 space-y-6">
+                            <div className="bg-white dark:bg-navy p-6 rounded-xl shadow border border-gray-200 dark:border-gray-800">
+                                <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                                    <i className="fas fa-inbox text-gold"></i> Client Inquiries & Leads ({enquiries.length})
+                                </h3>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-left text-xs">
+                                        <thead className="bg-gray-100 dark:bg-navy-dark text-gray-500 dark:text-gray-400 uppercase">
+                                            <tr>
+                                                <th className="p-3">Client</th>
+                                                <th className="p-3">Contact</th>
+                                                <th className="p-3">Type</th>
+                                                <th className="p-3">Location</th>
+                                                <th className="p-3">Status</th>
+                                                <th className="p-3 text-right">Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+                                            {enquiries.map(e => (
+                                                <tr key={e.id} className="hover:bg-gray-50 dark:hover:bg-navy-dark/50">
+                                                    <td className="p-3 font-bold">
+                                                        {e.name}
+                                                        <span className="block text-[10px] text-gray-400 font-normal">{e.date}</span>
+                                                    </td>
+                                                    <td className="p-3">
+                                                        <a href={`tel:${e.phone}`} className="text-gold font-semibold hover:underline block">{e.phone}</a>
+                                                        <span className="text-[10px] text-gray-400 block">{e.email}</span>
+                                                    </td>
+                                                    <td className="p-3"><span className="bg-gold/10 text-gold px-2 py-0.5 rounded font-bold">{e.project}</span></td>
+                                                    <td className="p-3">{e.location}</td>
+                                                    <td className="p-3">
+                                                        <select
+                                                            value={e.status}
+                                                            onChange={(evt) => handleStatusChange(e.id, evt.target.value)}
+                                                            className={`p-1 text-[11px] rounded font-bold border ${e.status === 'Completed' ? 'bg-green-100 text-green-800 border-green-300' : e.status === 'In Progress' ? 'bg-blue-100 text-blue-800 border-blue-300' : 'bg-amber-100 text-amber-800 border-amber-300'}`}
+                                                        >
+                                                            <option value="New">New</option>
+                                                            <option value="In Progress">In Progress</option>
+                                                            <option value="Completed">Completed</option>
+                                                            <option value="Rejected">Rejected</option>
+                                                        </select>
+                                                    </td>
+                                                    <td className="p-3 text-right">
+                                                        <button onClick={() => handleDeleteEnquiry(e.id)} className="text-red-500 hover:text-red-700 p-1">
+                                                            <i className="fas fa-trash-can"></i>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            {/* Section 2: Projects Control */}
+                            <div className="bg-white dark:bg-navy p-6 rounded-xl shadow border border-gray-200 dark:border-gray-800">
+                                <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                                    <i className="fas fa-tasks text-gold"></i> Live Projects Control ({projects.length})
+                                </h3>
+                                <div className="space-y-3">
+                                    {['Ongoing', 'Completed'].map(status => {
+                                        const statusProjects = projects.filter(p => p.status === status);
+                                        return (
+                                            <div key={status}>
+                                                <h4 className={`text-sm font-black mb-2 ${status === 'Completed' ? 'text-green-600' : 'text-amber-600'}`}>{status} Projects ({statusProjects.length})</h4>
+                                                {statusProjects.length === 0 && <p className="text-xs text-gray-400 mb-3">No {status.toLowerCase()} projects.</p>}
+                                                {statusProjects.map(p => (
+                                                    <div key={p.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 mb-3 bg-gray-50 dark:bg-navy-dark rounded-lg border border-gray-200 dark:border-gray-700">
+                                                        <div className="min-w-0 flex items-center gap-3">
+                                                            <img src={p.image} alt="" className="w-12 h-12 rounded object-cover shrink-0 border border-gray-300 dark:border-gray-600" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                                                            <div className="min-w-0">
+                                                                <h4 className="font-bold text-sm break-words">{p.title}</h4>
+                                                                <span className="text-[10px] text-gray-400">{p.category}</span>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+                                                            <button onClick={() => handleProjectStatusToggle(p.id)} className={`px-3 py-2 rounded text-xs font-bold whitespace-nowrap ${p.status === 'Completed' ? 'bg-green-600 text-white' : 'bg-amber-500 text-navy-dark'}`}>
+                                                                {p.status}
+                                                            </button>
+                                                            <button onClick={() => handleDeleteProject(p.id)} className="text-red-500 hover:text-red-700 p-2" aria-label={`Delete ${p.title}`} title="Delete project">
+                                                                <i className="fas fa-trash-can"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Section 3: Add New Project Form */}
+                        <div className="bg-white dark:bg-navy p-6 rounded-xl shadow border border-gray-200 dark:border-gray-800 h-fit">
+                            <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                                <i className="fas fa-folder-plus text-gold"></i> Create New Project
+                            </h3>
+                            <form onSubmit={handleAddProject} className="space-y-4">
+                                <div>
+                                    <label className="block text-xs font-bold uppercase text-gray-500 dark:text-gray-400 mb-1">Project Title</label>
+                                    <input type="text" value={newProjTitle} onChange={(e) => setNewProjTitle(e.target.value)} required placeholder="e.g. Modern Villa Design" className="w-full p-2.5 text-xs rounded bg-gray-50 dark:bg-navy-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:border-gold" />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold uppercase text-gray-500 dark:text-gray-400 mb-1">Category</label>
+                                    <select value={newProjCategory} onChange={(e) => setNewProjCategory(e.target.value)} className="w-full p-2.5 text-xs rounded bg-gray-50 dark:bg-navy-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:border-gold">
+                                        <option value="Residential">Residential</option>
+                                        <option value="Commercial">Commercial</option>
+                                        <option value="Interior">Interior</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold uppercase text-gray-500 dark:text-gray-400 mb-1">Status</label>
+                                    <select value={newProjStatus} onChange={(e) => setNewProjStatus(e.target.value)} className="w-full p-2.5 text-xs rounded bg-gray-50 dark:bg-navy-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:border-gold">
+                                        <option value="Ongoing">Ongoing</option>
+                                        <option value="Completed">Completed</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold uppercase text-gray-500 dark:text-gray-400 mb-1">Project Image</label>
+                                    <input type="file" accept="image/*" onChange={handleProjectImageChange} className="w-full p-2.5 text-xs rounded bg-gray-50 dark:bg-navy-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:border-gold" />
+                                    {newProjImage && <img src={newProjImage} alt="Selected project" className="mt-2 h-24 w-full rounded object-cover border border-gold/40" />}
+                                    {newProjImageName && <p className="mt-1 text-[10px] text-gray-400 truncate">Selected: {newProjImageName}</p>}
+                                </div>
+                                <button type="submit" className="w-full bg-gold hover:bg-gold-light text-navy-dark font-bold py-3 rounded text-xs uppercase tracking-wider shadow transition">
+                                    Publish New Project
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // Home View Component
+        function HomeView({ setActiveTab, projects, enquiries }) {
+            const albumImages = [
+                { src: "gallery6.jpeg", title: "Multi-Storey Structural Execution" },
+                { src: "gallery3.jpeg", title: "Concrete Pouring & Slab Casting" },
+                { src: "project2.jpeg", title: "Completed Premium Project" },
+                { src: "incompleted.jpeg", title: "Ongoing Commercial Development" },
+                { src: "galllery8.jpeg", title: "Slab Casting Operations" },
+                { src: "gallery10.jpeg", title: "Night Construction Operations" }
+            ];
+
+            const [currentIndex, setCurrentIndex] = useState(0);
+            const welcomeText = "Welcome to Vaishnavi Construction's";
+            const [typedWelcomeText, setTypedWelcomeText] = useState('');
+
+            useEffect(() => {
+                setTypedWelcomeText('');
+                let characterIndex = 0;
+                const typingInterval = setInterval(() => {
+                    characterIndex += 1;
+                    setTypedWelcomeText(welcomeText.slice(0, characterIndex));
+                    if (characterIndex === welcomeText.length) {
+                        clearInterval(typingInterval);
+                    }
+                }, 70);
+                return () => clearInterval(typingInterval);
+            }, []);
+
+            useEffect(() => {
+                const interval = setInterval(() => {
+                    setCurrentIndex((prevIndex) => (prevIndex + 1) % albumImages.length);
+                }, 3000);
+                return () => clearInterval(interval);
+            }, [albumImages.length]);
+
+            const prevSlide = () => {
+                setCurrentIndex((prev) => (prev === 0 ? albumImages.length - 1 : prev - 1));
+            };
+
+            const nextSlide = () => {
+                setCurrentIndex((prev) => (prev + 1) % albumImages.length);
+            };
+            return (
+                <div>
+                    <div className="relative text-white py-24 md:py-32 px-4 text-center overflow-hidden min-h-[500px] flex items-center justify-center">
+                        {albumImages.map((img, index) => (
+                            <div
+                                key={index}
+                                className={`absolute inset-0 bg-cover bg-center transition-opacity duration-1000 ease-in-out ${index === currentIndex ? 'opacity-100 scale-105 transition-transform duration-5000' : 'opacity-0 scale-100'}`}
+                                style={{ backgroundImage: `linear-gradient(rgba(7, 26, 51, 0.75), rgba(7, 26, 51, 0.85)), url('${img.src}')` }}
+                            />
+                        ))}
+
+                        <div className="max-w-7xl w-full mx-auto relative z-10 text-center md:text-left">
+                            <div className="max-w-3xl md:border-l-4 md:border-gold md:pl-8">
+                                <div className="inline-flex items-center gap-2 bg-black/30 border border-white/25 rounded-full px-4 py-2 mb-6 backdrop-blur-sm">
+                                    <i className="fas fa-hard-hat text-gold"></i>
+                                    <span className="text-xs font-bold uppercase tracking-[0.2em] text-gray-100">Built on trust</span>
+                                </div>
+                                <h1 className="text-4xl md:text-6xl font-black leading-tight mb-4 drop-shadow-lg">
+                                    {typedWelcomeText}<span className="text-gold animate-pulse">|</span>
+                                </h1>
+                                <span className="text-gold text-xs md:text-sm font-bold uppercase tracking-[0.25em] mb-4 block">Engineering Precision</span>
+                                <h2 className="text-3xl md:text-5xl font-extrabold leading-tight mb-5 drop-shadow-lg">
+                                    Building Dreams. Creating Landmarks.
+                                </h2>
+                                <p className="text-gray-200 text-base md:text-lg mb-8 max-w-2xl drop-shadow">
+                                    Professional construction and engineering solutions delivered with quality, precision, and trust.
+                                </p>
+                                <div className="flex flex-wrap justify-center md:justify-start gap-4">
+                                    <button onClick={() => setActiveTab('projects')} className="bg-gold hover:bg-gold-light text-navy-dark font-bold px-6 py-3 rounded shadow-lg hover:-translate-y-0.5 transition">
+                                        View Our Projects
+                                    </button>
+                                    <button onClick={() => setActiveTab('contact')} className="border border-white/70 hover:bg-white hover:text-navy-dark px-6 py-3 rounded font-bold transition">
+                                        Get In Touch
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <button onClick={prevSlide} className="absolute left-4 z-20 text-white/70 hover:text-white text-2xl bg-black/30 hover:bg-black/60 p-3 rounded-full transition">
+                            <i className="fas fa-chevron-left"></i>
+                        </button>
+                        <button onClick={nextSlide} className="absolute right-4 z-20 text-white/70 hover:text-white text-2xl bg-black/30 hover:bg-black/60 p-3 rounded-full transition">
+                            <i className="fas fa-chevron-right"></i>
+                        </button>
+
+                        <div className="absolute bottom-4 left-0 right-0 z-20 flex justify-center gap-2">
+                            {albumImages.map((_, idx) => (
+                                <button
+                                    key={idx}
+                                    onClick={() => setCurrentIndex(idx)}
+                                    className={`h-2.5 rounded-full transition-all ${idx === currentIndex ? 'w-8 bg-gold' : 'w-2.5 bg-white/50'}`}
+                                />
+                            ))}
+                        </div>
+                    </div>
+                    <div className="max-w-5xl mx-auto my-8 px-4">
+                        <div className="bg-navy dark:bg-navy-dark text-white p-6 md:p-7 rounded-xl shadow-lg border border-gold/30 flex flex-col md:flex-row items-center justify-between gap-5">
+                            <div className="flex items-center gap-4 text-center md:text-left">
+                                <div className="w-14 h-14 rounded-full bg-gold text-navy-dark flex items-center justify-center text-xl">
+                                    <i className="fas fa-chart-line"></i>
+                                </div>
+                                <div>
+                                    <p className="text-gold text-xs font-bold uppercase tracking-widest">Your project starts here</p>
+                                    <p className="text-sm text-gray-300 mt-1">Talk to our team about your next construction plan.</p>
+                                </div>
+                            </div>
+                            <div className="text-center md:text-right shrink-0">
+                                <h3 className="text-3xl font-black text-gold">{enquiries.length}</h3>
+                                <p className="text-[10px] text-gray-300 uppercase font-semibold mt-1 tracking-wider">Recorded Inquiries</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+
+        // About View Component
+        // About View Component
+        function AboutView() {
+            return (
+                <div className="max-w-7xl mx-auto px-4 py-12">
+                    <div className="text-center mb-10">
+                        <span className="inline-flex items-center gap-2 text-gold text-[11px] font-bold uppercase tracking-[0.25em] mb-3"><span className="w-8 h-px bg-gold"></span> Our Story <span className="w-8 h-px bg-gold"></span></span>
+                        <h2 className="text-3xl md:text-4xl font-black text-navy dark:text-white mb-2">About Vaishnavi Construction's</h2>
+                        <p className="text-gray-500 dark:text-gray-400 font-semibold text-sm max-w-2xl mx-auto">WE BUILD YOUR DREAM</p>
+                    </div>
+
+                    <div className="relative overflow-hidden bg-gradient-to-br from-navy to-navy-dark text-white p-6 md:p-10 rounded-2xl shadow-xl border border-gold/30 mb-12">
+                        <div className="absolute -right-10 -top-14 w-48 h-48 rounded-full border border-gold/20"></div>
+                        <div className="relative max-w-4xl">
+                            <span className="text-gold text-[11px] font-bold uppercase tracking-[0.2em]">Built with purpose</span>
+                            <h3 className="text-2xl md:text-3xl font-black mt-2 mb-4 flex items-center gap-3">
+                                <i className="fas fa-building-circle-check text-gold"></i>
+                                Our Identity & Legacy
+                            </h3>
+                            <p className="text-sm md:text-base leading-relaxed text-gray-200">
+                                Established in the year 2025 under the dynamic leadership of Mr.Er.Ashutosh Kumar Shukla, Vaishnavi Construction's is now a multidisciplinary construction company with a rich legacy of delivering world-class Construction projects. Born with a vision to "Build Better India", Vaishnavi Construction's has been consistently pushing the boundaries of Innovation, Quality, Craftsmanship, Speed of execution and thereby building projects with a long-term value creation for its client.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="flex items-end justify-between mb-6"><div><span className="text-gold text-[11px] font-bold uppercase tracking-[0.2em]">The people behind the work</span><h3 className="text-2xl font-black text-navy dark:text-white mt-1">Leadership Team</h3></div><i className="fas fa-people-group text-3xl text-gold/40 hidden sm:block"></i></div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div className="bg-white dark:bg-navy p-6 rounded-xl shadow border-t-4 border-gold border-x border-b border-gray-200 dark:border-gray-800 flex flex-col items-center transition duration-300 hover:-translate-y-1 hover:shadow-xl">
+                            <img
+                                src="mahima-devi.jpg"
+                                alt="Mahima Devi"
+                                className="w-28 h-28 rounded-full object-cover border-4 border-gold mb-4 shadow-md"
+                                onError={(e) => { e.target.onerror = null; e.target.src = "https://via.placeholder.com/112?text=MD"; }}
+                            />
+                            <h4 className="text-lg font-bold text-center">Mahima Devi</h4>
+                            <p className="text-xs text-gold text-center font-semibold mb-3">Propritor</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 text-center">Overseeing strategic planning and enterprise development at Vaishnavi Construction.</p>
+                        </div>
+
+                        <div className="bg-white dark:bg-navy p-6 rounded-xl shadow border-t-4 border-navy border-x border-b border-gray-200 dark:border-gray-800 flex flex-col items-center transition duration-300 hover:-translate-y-1 hover:shadow-xl">
+                            <img
+                                src="aashutosh-shukla.jpg"
+                                alt="Er. Aashutosh Kumar Shukla"
+                                className="w-28 h-28 rounded-full object-cover border-4 border-gold mb-4 shadow-md"
+                                onError={(e) => { e.target.onerror = null; e.target.src = "https://via.placeholder.com/112?text=AS"; }}
+                            />
+                            <h4 className="text-lg font-bold text-center">Er.Ashutosh Kumar Shukla</h4>
+                            <p className="text-xs text-gold text-center font-semibold mb-3">Managing Director</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 text-center">Heading engineering execution, civil operations, and technical excellence.</p>
+                        </div>
+
+
+                        <div className="bg-white dark:bg-navy p-6 rounded-xl shadow border-t-4 border-gold border-x border-b border-gray-200 dark:border-gray-800 flex flex-col items-center transition duration-300 hover:-translate-y-1 hover:shadow-xl">
+                            <img
+                                src="vinay-verma.jpg"
+                                alt="Er. Vinay Kumar Verma"
+                                className="w-28 h-28 rounded-full object-cover border-4 border-gold mb-4 shadow-md"
+                                onError={(e) => { e.target.onerror = null; e.target.src = "https://via.placeholder.com/112?text=VV"; }}
+                            />
+                            <h4 className="text-lg font-bold text-center">Er. Vinay Kumar Verma</h4>
+                            <p className="text-xs text-gold text-center font-semibold mb-3">Business Head</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 text-center">Managing client relationships, commercial estimations, and expansion strategy.</p>
+                        </div>
+
+                        <div className="bg-white dark:bg-navy p-6 rounded-xl shadow border-t-4 border-navy border-x border-b border-gray-200 dark:border-gray-800 flex flex-col items-center group transition duration-300 hover:-translate-y-1 hover:shadow-xl">
+                            <a href="https://himanshu-wheat.vercel.app/" target="_blank" rel="noopener noreferrer" className="block text-center">
+                                <img
+                                    src="himanshuimage.jpg"
+                                    alt="Er. Himanshu Singh"
+                                    className="w-28 h-28 rounded-full object-cover border-4 border-gold mb-4 shadow-md transition-transform duration-300 group-hover:scale-105"
+                                    onError={(e) => { e.target.onerror = null; e.target.src = "https://via.placeholder.com/112?text=HS"; }}
+                                />
+                                <h4 className="text-lg font-bold text-center group-hover:text-gold transition-colors">
+                                    Er. Himanshu Singh
+                                </h4>
+                            </a>
+                            <p className="text-xs text-gold text-center font-semibold mb-3">IT Head</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 text-center mb-4">Managing technology infrastructure, digital systems, and web operations.</p>
+                        </div>
+                        <div className="bg-white dark:bg-navy p-6 rounded-xl shadow border-t-4 border-gold border-x border-b border-gray-200 dark:border-gray-800 flex flex-col items-center transition duration-300 hover:-translate-y-1 hover:shadow-xl">
+                            <img
+                                src="Ajeet-Mishra.png"
+                                alt="Ajeet Kumar Mishra"
+                                className="w-28 h-28 rounded-full object-cover border-4 border-gold mb-4 shadow-md"
+                                onError={(e) => { e.target.onerror = null; e.target.src = "https://via.placeholder.com/112?text=MD"; }}
+                            />
+                            <h4 className="text-lg font-bold text-center">Ajeet Kumar Mishra</h4>
+                            <p className="text-xs text-gold text-center font-semibold mb-3">Accountant</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 text-center">Overseeing accounting and financial operations at Vaishnavi Construction.</p>
+                        </div>
+                    </div>
+
+
+
+                    <div className="mt-6 bg-navy-dark text-white p-6 rounded-lg shadow-lg border border-gold/30 flex flex-col md:flex-row justify-between items-center gap-4">
+                        <div>
+                            <span className="text-gold text-xs font-bold uppercase tracking-wider block mb-1">Official Document</span>
+                            <h4 className="text-lg font-bold">GST Registration Certificate</h4>
+                            <p className="text-xs text-gray-300 mt-1">Government of India Registration Number: <span className="font-mono text-gold">09KKIPD7664H1ZL</span></p>
+                        </div>
+                        <a
+                            href="GST-Paper1.pdf"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="bg-gold hover:bg-gold-light text-navy-dark font-bold px-6 py-3 rounded shadow flex items-center gap-2 transition text-sm"
+                        >
+                            <i className="fas fa-file-pdf text-lg"></i>
+                            View / Download GST Certificate
+                        </a>
+                    </div>
+                </div>
+            );
+        }
+
+        // Projects View Component
+        function ProjectsView({ projects }) {
+            const ongoingProjects = projects.filter(p => p.status === 'Ongoing');
+            const completedProjects = projects.filter(p => p.status === 'Completed');
+            const renderProjectCards = (projectList) => projectList.map(p => (
+                <div key={p.id} className="bg-white dark:bg-navy rounded overflow-hidden shadow border border-gray-200 dark:border-gray-800 flex flex-col">
+                    <div className="h-56 bg-gray-200 dark:bg-navy-dark relative overflow-hidden">
+                        <img src={p.image} alt={p.title} className="w-full h-full object-cover transition-transform duration-300 hover:scale-105" onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; e.target.nextElementSibling.style.display = 'flex'; }} />
+                        <div className="hidden absolute inset-0 items-center justify-center text-gray-500 bg-gray-200 dark:bg-navy-dark"><i className="fas fa-building text-4xl text-gold"></i></div>
+                        <span className={`absolute top-3 right-3 text-[10px] px-2.5 py-1 rounded font-bold uppercase shadow ${p.status === 'Completed' ? 'bg-green-600 text-white' : 'bg-amber-500 text-navy-dark'}`}>{p.status}</span>
+                    </div>
+                    <div className="p-6 flex-grow"><span className="text-[10px] bg-gold/20 text-gold px-2 py-0.5 rounded font-bold uppercase">{p.category}</span><h3 className="text-lg font-bold mt-2">{p.title}</h3></div>
+                </div>
+            ));
+
+            return (
+                <div className="max-w-7xl mx-auto px-4 py-12">
+                    <h2 className="text-3xl font-black mb-8">Our Construction Projects</h2>
+                    {ongoingProjects.length > 0 && <section className="mb-10"><h3 className="text-2xl font-black mb-5 text-amber-600 dark:text-amber-400">Ongoing Projects</h3><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">{renderProjectCards(ongoingProjects)}</div></section>}
+                    {completedProjects.length > 0 && <section><h3 className="text-2xl font-black mb-5 text-green-700 dark:text-green-400">Completed Projects</h3><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">{renderProjectCards(completedProjects)}</div></section>}
+                </div>
+            );
+        }
+
+        // Services View Component
+        function ServicesView() {
+            const services = [
+                "Residential Construction", "Commercial Buildings", "Civil Engineering",
+                "Site Supervision", "Quantity Estimation",
+                "Renovation & Remodeling", "Infrastructure Development"
+            ];
+            return (
+                <div className="max-w-7xl mx-auto px-4 py-12">
+                    <div className="bg-navy dark:bg-navy-dark text-white rounded-2xl p-6 md:p-8 mb-10 shadow-lg border border-gold/30 flex flex-col md:flex-row md:items-end justify-between gap-4">
+                        <div><span className="text-gold text-[11px] font-bold uppercase tracking-[0.25em]">What we do</span><h2 className="text-3xl md:text-4xl font-black mt-2">Our Engineering & Construction Services</h2></div>
+                        <p className="text-sm text-gray-300 max-w-sm md:text-right">From the first drawing to the final finish, every detail is managed with precision.</p>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                        {services.map((service, idx) => (
+                            <div key={idx} className="group relative bg-white dark:bg-navy p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden transition duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-gold">
+                                <div className="flex items-start justify-between mb-5"><div className="w-12 h-12 rounded-xl bg-gold/10 text-gold flex items-center justify-center text-xl group-hover:bg-gold group-hover:text-navy-dark transition-colors"><i className={`fas ${['fa-house', 'fa-building', 'fa-compass-drafting', 'fa-helmet-safety', 'fa-ruler-combined', 'fa-arrows-rotate', 'fa-road-bridge'][idx]}`}></i></div><span className="text-3xl font-black text-gray-100 dark:text-gray-800 group-hover:text-gold/20 transition-colors">0{idx + 1}</span></div>
+                                <h3 className="font-bold text-base mb-2 text-navy dark:text-white">{service}</h3>
+                                <p className="text-xs leading-relaxed text-gray-500 dark:text-gray-400">High-grade engineering precision and quality execution according to safety codes.</p>
+                                <div className="absolute bottom-0 left-0 right-0 h-1 bg-gold scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300"></div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        }
+
+        // Gallery View Component
+        function GalleryView() {
+            const galleryImages = [
+                { src: "project2.jpeg", title: "Completed Villa Project" },
+                { src: "incompleted.jpeg", title: "High-Rise Building Construction" },
+                { src: "gallery3.jpeg", title: "Concrete Pouring & Slab Casting" },
+                { src: "gallery4.jpeg", title: "Pillar Curing & Maintenance" },
+                { src: "gallery5.jpeg", title: "Column Formwork & Shuttering" },
+                { src: "gallery6.jpeg", title: "Multi-Storey Structural Execution" },
+                { src: "gallery7.jpeg", title: "Slab Reinforcement & Steel Tying" },
+                { src: "galllery8.jpeg", title: "Slab Concrete Casting Operation" },
+                { src: "gallery8.jpeg", title: "Concealed Conduit & Mesh Laying" },
+                { src: "gallery9.jpeg", title: "Reinforced Concrete Column Work" },
+                { src: "gallery10.jpeg", title: "Night Construction Operations View" },
+                { src: "gallery11.jpeg", title: "Night Inspection & Rebar Supervision" }
+            ];
+
+            return (
+                <div className="max-w-7xl mx-auto px-4 py-12">
+                    <h2 className="text-3xl font-black text-center mb-2">Construction Gallery</h2>
+                    <p className="text-center text-gray-500 text-xs mb-8">Real-time site images from our ongoing & completed projects</p>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                        {galleryImages.map((img, index) => (
+                            <div key={index} className="group h-64 bg-gray-200 dark:bg-navy rounded-lg overflow-hidden shadow-md border border-gray-200 dark:border-gray-800 relative">
+                                <img
+                                    src={img.src}
+                                    alt={img.title}
+                                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                    onError={(e) => {
+                                        e.target.onerror = null;
+                                        e.target.src = "https://via.placeholder.com/400x300?text=Construction+Site";
+                                    }}
+                                />
+                                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
+                                    <p className="text-white text-xs font-semibold">{img.title}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        }
+
+        // Contact View Component
+        function ContactView({ handleFormSubmit }) {
+            return (
+                <div className="max-w-7xl mx-auto px-4 py-12 grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+                    <div className="flex flex-col">
+                        <h2 className="text-3xl font-black mb-4">Get In Touch</h2>
+                        <p className="text-gray-500 text-sm mb-6">Reach out to our leadership and engineering team for project consultation.</p>
+
+                        <div className="bg-navy dark:bg-navy-dark text-white rounded-xl p-6 shadow-lg border border-gold/30 flex-grow">
+                            <p className="text-gold text-xs font-bold uppercase tracking-widest mb-5">Let's build something lasting</p>
+                            <div className="space-y-5 text-sm text-gray-200">
+                                <p className="flex gap-3"><i className="fas fa-location-dot text-gold mt-1"></i><span><strong className="text-white block">Registered Office</strong>Arjunpur Pathak, Dewari (Amghat), Mirzapur, Uttar Pradesh - 231001</span></p>
+                                <p className="flex gap-3"><i className="fas fa-phone text-gold mt-1"></i><span><strong className="text-white block">Phones</strong><a href="tel:+917009118341" className="text-gold">+917009118341</a> / <a href="tel:+919555754273" className="text-gold">+91 95557 54273</a></span></p>
+                                <p className="flex gap-3"><i className="fas fa-envelope text-gold mt-1"></i><span><strong className="text-white block">Email</strong><a href="mailto:vs3031100@gmail.com" className="text-gold">vs3031100@gmail.com</a></span></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form onSubmit={handleFormSubmit} className="bg-white dark:bg-navy p-6 rounded shadow border border-gray-200 dark:border-gray-800 space-y-4">
+                        <h3 className="font-bold text-lg mb-2">Project Inquiry Form</h3>
+                        <input name="name" required placeholder="Full Name" className="w-full p-2.5 text-sm rounded border dark:bg-navy-dark dark:border-gray-700" />
+                        <input name="phone" required placeholder="Phone Number" className="w-full p-2.5 text-sm rounded border dark:bg-navy-dark dark:border-gray-700" />
+                        <input name="email" type="email" placeholder="Email Address" className="w-full p-2.5 text-sm rounded border dark:bg-navy-dark dark:border-gray-700" />
+                        <select name="projectType" className="w-full p-2.5 text-sm rounded border dark:bg-navy-dark dark:border-gray-700">
+                            <option>Residential Construction</option>
+                            <option>Commercial Construction</option>
+                            <option>Renovation Work</option>
+                        </select>
+                        <input name="location" placeholder="Project Location" className="w-full p-2.5 text-sm rounded border dark:bg-navy-dark dark:border-gray-700" />
+                        <button type="submit" className="w-full bg-gold hover:bg-gold-light text-navy-dark font-bold py-3 rounded shadow">Submit Request</button>
+                    </form>
+                </div>
+            );
+        }
+
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+</body>
+
+</html>
