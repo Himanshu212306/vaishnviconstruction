@@ -131,6 +131,7 @@
 
     <script type="text/babel">
         const { useState, useEffect } = React;
+        const PROJECTS_API = '/api/projects';
 
         function App() {
             const [darkMode, setDarkMode] = useState(false);
@@ -167,10 +168,33 @@
                 ];
             });
 
+            const saveProjects = (updatedProjects) => {
+                setProjects(updatedProjects);
+                localStorage.setItem('vaishnavi_projects', JSON.stringify(updatedProjects));
+                return fetch(PROJECTS_API, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updatedProjects)
+                }).then(response => {
+                    if (!response.ok) throw new Error('Project save failed');
+                    return response.json();
+                });
+            };
+
             useEffect(() => {
                 const handleScroll = () => setScrolled(window.scrollY > 40);
                 window.addEventListener('scroll', handleScroll);
                 return () => window.removeEventListener('scroll', handleScroll);
+            }, []);
+
+            useEffect(() => {
+                fetch(PROJECTS_API)
+                    .then(response => response.ok ? response.json() : Promise.reject())
+                    .then(serverProjects => {
+                        setProjects(serverProjects);
+                        localStorage.setItem('vaishnavi_projects', JSON.stringify(serverProjects));
+                    })
+                    .catch(() => {});
             }, []);
 
             const toggleDarkMode = () => {
@@ -311,7 +335,7 @@
                             {activeTab === 'services' && <ServicesView />}
                             {activeTab === 'gallery' && <GalleryView />}
                             {activeTab === 'contact' && <ContactView handleFormSubmit={handleFormSubmit} />}
-                            {activeTab === 'admin' && <AdminPortalView enquiries={enquiries} setEnquiries={setEnquiries} projects={projects} setProjects={setProjects} />}
+                            {activeTab === 'admin' && <AdminPortalView enquiries={enquiries} setEnquiries={setEnquiries} projects={projects} setProjects={setProjects} saveProjects={saveProjects} />}
                         </div>
                     </main>
 
@@ -377,7 +401,7 @@
         }
 
         // --- FULL ADMIN PORTAL MANAGEMENT COMPONENT ---
-        function AdminPortalView({ enquiries, setEnquiries, projects, setProjects }) {
+        function AdminPortalView({ enquiries, setEnquiries, projects, setProjects, saveProjects }) {
             const [isAuthenticated, setIsAuthenticated] = useState(false);
             const [password, setPassword] = useState('');
             const [loginError, setLoginError] = useState('');
@@ -386,7 +410,8 @@
             const [newProjTitle, setNewProjTitle] = useState('');
             const [newProjCategory, setNewProjCategory] = useState('Residential');
             const [newProjStatus, setNewProjStatus] = useState('Ongoing');
-            const [newProjImage, setNewProjImage] = useState('incompleted.jpeg');
+            const [newProjImage, setNewProjImage] = useState('');
+            const [newProjImageName, setNewProjImageName] = useState('');
 
             // Admin Login Handler (Passcode: 12345)
             const handleLogin = (e) => {
@@ -429,12 +454,30 @@
                 };
 
                 const updatedProjects = [newProj, ...projects];
-                setProjects(updatedProjects);
-                localStorage.setItem('vaishnavi_projects', JSON.stringify(updatedProjects));
+                saveProjects(updatedProjects);
 
                 setNewProjTitle('');
-                setNewProjImage('incompleted.jpeg');
+                setNewProjImage('');
+                setNewProjImageName('');
                 alert("Project Safaltapoorvak Add Ho Gaya!");
+            };
+
+            const handleProjectImageChange = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                if (!file.type.startsWith('image/')) {
+                    alert('Please select an image file.');
+                    e.target.value = '';
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = () => {
+                    setNewProjImage(reader.result);
+                    setNewProjImageName(file.name);
+                };
+                reader.readAsDataURL(file);
             };
 
             // Toggle Project Status
@@ -445,16 +488,14 @@
                     }
                     return p;
                 });
-                setProjects(updated);
-                localStorage.setItem('vaishnavi_projects', JSON.stringify(updated));
+                saveProjects(updated);
             };
 
             // Delete Project
             const handleDeleteProject = (id) => {
                 if (window.confirm("Kya aap is project ko website se hatana chahte hain?")) {
                     const updated = projects.filter(p => p.id !== id);
-                    setProjects(updated);
-                    localStorage.setItem('vaishnavi_projects', JSON.stringify(updated));
+                    saveProjects(updated);
                 }
             };
 
@@ -563,25 +604,34 @@
                                     <i className="fas fa-tasks text-gold"></i> Live Projects Control ({projects.length})
                                 </h3>
                                 <div className="space-y-3">
-                                    {projects.map(p => (
-                                        <div key={p.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-navy-dark rounded-lg border border-gray-200 dark:border-gray-700">
-                                            <div>
-                                                <h4 className="font-bold text-sm">{p.title}</h4>
-                                                <span className="text-[10px] text-gray-400">{p.category} | Image: {p.image}</span>
+                                    {['Ongoing', 'Completed'].map(status => {
+                                        const statusProjects = projects.filter(p => p.status === status);
+                                        return (
+                                            <div key={status}>
+                                                <h4 className={`text-sm font-black mb-2 ${status === 'Completed' ? 'text-green-600' : 'text-amber-600'}`}>{status} Projects ({statusProjects.length})</h4>
+                                                {statusProjects.length === 0 && <p className="text-xs text-gray-400 mb-3">No {status.toLowerCase()} projects.</p>}
+                                                {statusProjects.map(p => (
+                                                    <div key={p.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 mb-3 bg-gray-50 dark:bg-navy-dark rounded-lg border border-gray-200 dark:border-gray-700">
+                                                        <div className="min-w-0 flex items-center gap-3">
+                                                            <img src={p.image} alt="" className="w-12 h-12 rounded object-cover shrink-0 border border-gray-300 dark:border-gray-600" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                                                            <div className="min-w-0">
+                                                                <h4 className="font-bold text-sm break-words">{p.title}</h4>
+                                                                <span className="text-[10px] text-gray-400">{p.category}</span>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+                                                            <button onClick={() => handleProjectStatusToggle(p.id)} className={`px-3 py-2 rounded text-xs font-bold whitespace-nowrap ${p.status === 'Completed' ? 'bg-green-600 text-white' : 'bg-amber-500 text-navy-dark'}`}>
+                                                                {p.status}
+                                                            </button>
+                                                            <button onClick={() => handleDeleteProject(p.id)} className="text-red-500 hover:text-red-700 p-2" aria-label={`Delete ${p.title}`} title="Delete project">
+                                                                <i className="fas fa-trash-can"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ))}
                                             </div>
-                                            <div className="flex items-center gap-3">
-                                                <button
-                                                    onClick={() => handleProjectStatusToggle(p.id)}
-                                                    className={`px-3 py-1 rounded text-xs font-bold ${p.status === 'Completed' ? 'bg-green-600 text-white' : 'bg-amber-500 text-navy-dark'}`}
-                                                >
-                                                    {p.status}
-                                                </button>
-                                                <button onClick={() => handleDeleteProject(p.id)} className="text-red-500 hover:text-red-700">
-                                                    <i className="fas fa-trash-can"></i>
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             </div>
                         </div>
@@ -612,8 +662,10 @@
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-bold uppercase text-gray-500 dark:text-gray-400 mb-1">Image Filename</label>
-                                    <input type="text" value={newProjImage} onChange={(e) => setNewProjImage(e.target.value)} placeholder="e.g. project2.jpeg" className="w-full p-2.5 text-xs rounded bg-gray-50 dark:bg-navy-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:border-gold" />
+                                    <label className="block text-xs font-bold uppercase text-gray-500 dark:text-gray-400 mb-1">Project Image</label>
+                                    <input type="file" accept="image/*" onChange={handleProjectImageChange} className="w-full p-2.5 text-xs rounded bg-gray-50 dark:bg-navy-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:border-gold" />
+                                    {newProjImage && <img src={newProjImage} alt="Selected project" className="mt-2 h-24 w-full rounded object-cover border border-gold/40" />}
+                                    {newProjImageName && <p className="mt-1 text-[10px] text-gray-400 truncate">Selected: {newProjImageName}</p>}
                                 </div>
                                 <button type="submit" className="w-full bg-gold hover:bg-gold-light text-navy-dark font-bold py-3 rounded text-xs uppercase tracking-wider shadow transition">
                                     Publish New Project
@@ -859,39 +911,24 @@
 
         // Projects View Component
         function ProjectsView({ projects }) {
+            const ongoingProjects = projects.filter(p => p.status === 'Ongoing');
+            const completedProjects = projects.filter(p => p.status === 'Completed');
+            const renderProjectCards = (projectList) => projectList.map(p => (
+                <div key={p.id} className="bg-white dark:bg-navy rounded overflow-hidden shadow border border-gray-200 dark:border-gray-800 flex flex-col">
+                    <div className="h-56 bg-gray-200 dark:bg-navy-dark relative overflow-hidden">
+                        <img src={p.image} alt={p.title} className="w-full h-full object-cover transition-transform duration-300 hover:scale-105" onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; e.target.nextElementSibling.style.display = 'flex'; }} />
+                        <div className="hidden absolute inset-0 items-center justify-center text-gray-500 bg-gray-200 dark:bg-navy-dark"><i className="fas fa-building text-4xl text-gold"></i></div>
+                        <span className={`absolute top-3 right-3 text-[10px] px-2.5 py-1 rounded font-bold uppercase shadow ${p.status === 'Completed' ? 'bg-green-600 text-white' : 'bg-amber-500 text-navy-dark'}`}>{p.status}</span>
+                    </div>
+                    <div className="p-6 flex-grow"><span className="text-[10px] bg-gold/20 text-gold px-2 py-0.5 rounded font-bold uppercase">{p.category}</span><h3 className="text-lg font-bold mt-2">{p.title}</h3></div>
+                </div>
+            ));
+
             return (
                 <div className="max-w-7xl mx-auto px-4 py-12">
                     <h2 className="text-3xl font-black mb-8">Our Construction Projects</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {projects.map(p => (
-                            <div key={p.id} className="bg-white dark:bg-navy rounded overflow-hidden shadow border border-gray-200 dark:border-gray-800 flex flex-col">
-                                <div className="h-56 bg-gray-200 dark:bg-navy-dark relative overflow-hidden">
-                                    <img
-                                        src={p.image}
-                                        alt={p.title}
-                                        className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
-                                        onError={(e) => {
-                                            e.target.onerror = null;
-                                            e.target.style.display = 'none';
-                                            e.target.nextElementSibling.style.display = 'flex';
-                                        }}
-                                    />
-                                    <div className="hidden absolute inset-0 items-center justify-center text-gray-500 bg-gray-200 dark:bg-navy-dark">
-                                        <i className="fas fa-building text-4xl text-gold"></i>
-                                    </div>
-                                    <span className={`absolute top-3 right-3 text-[10px] px-2.5 py-1 rounded font-bold uppercase shadow ${p.status === 'Completed' ? 'bg-green-600 text-white' : 'bg-amber-500 text-navy-dark'}`}>
-                                        {p.status}
-                                    </span>
-                                </div>
-                                <div className="p-6 flex-grow flex flex-col justify-between">
-                                    <div>
-                                        <span className="text-[10px] bg-gold/20 text-gold px-2 py-0.5 rounded font-bold uppercase">{p.category}</span>
-                                        <h3 className="text-lg font-bold mt-2">{p.title}</h3>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
+                    {ongoingProjects.length > 0 && <section className="mb-10"><h3 className="text-2xl font-black mb-5 text-amber-600 dark:text-amber-400">Ongoing Projects</h3><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">{renderProjectCards(ongoingProjects)}</div></section>}
+                    {completedProjects.length > 0 && <section><h3 className="text-2xl font-black mb-5 text-green-700 dark:text-green-400">Completed Projects</h3><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">{renderProjectCards(completedProjects)}</div></section>}
                 </div>
             );
         }
