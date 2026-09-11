@@ -18,7 +18,7 @@ const projectSchema = new mongoose.Schema({
 const Project = mongoose.models.VaishnaviProject || mongoose.model('VaishnaviProject', projectSchema);
 
 function getMongoUri() {
-    const uri = process.env.MONGODB_URI?.trim();
+    const uri = (process.env.MONGODB_URI || process.env.mongodb_url)?.trim();
     if (!uri) return null;
 
     try {
