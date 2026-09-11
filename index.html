@@ -175,10 +175,12 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(updatedProjects)
                 }).then(response => {
-                    if (!response.ok) throw new Error('Project save failed');
-                    setProjects(updatedProjects);
-                    localStorage.setItem('vaishnavi_projects', JSON.stringify(updatedProjects));
-                    return response.json();
+                    return response.json().then(result => {
+                        if (!response.ok) throw new Error(result.error || 'Project save failed');
+                        setProjects(updatedProjects);
+                        localStorage.setItem('vaishnavi_projects', JSON.stringify(updatedProjects));
+                        return result;
+                    });
                 });
             };
 
@@ -462,7 +464,7 @@
                         setNewProjImageName('');
                         alert("Project Safaltapoorvak Add Ho Gaya!");
                     })
-                    .catch(() => alert("Project save nahi ho paya. Vercel me MONGODB_URI check karein."));
+                    .catch(error => alert(`Project save nahi ho paya: ${error.message}`));
             };
 
             const handleProjectImageChange = (e) => {
@@ -491,14 +493,14 @@
                     }
                     return p;
                 });
-                saveProjects(updated).catch(() => alert("Status update nahi ho paya. Vercel me MONGODB_URI check karein."));
+                saveProjects(updated).catch(error => alert(`Status update nahi ho paya: ${error.message}`));
             };
 
             // Delete Project
             const handleDeleteProject = (id) => {
                 if (window.confirm("Kya aap is project ko website se hatana chahte hain?")) {
                     const updated = projects.filter(p => p.id !== id);
-                    saveProjects(updated).catch(() => alert("Project delete nahi ho paya. Vercel me MONGODB_URI check karein."));
+                    saveProjects(updated).catch(error => alert(`Project delete nahi ho paya: ${error.message}`));
                 }
             };
 

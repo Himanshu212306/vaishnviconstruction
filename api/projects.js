@@ -42,25 +42,26 @@ export default async function handler(request, response) {
         }
 
         if (request.method === 'PUT') {
-            if (!Array.isArray(request.body)) {
+            const projects = typeof request.body === 'string' ? JSON.parse(request.body) : request.body;
+            if (!Array.isArray(projects)) {
                 return response.status(400).json({ error: 'Projects must be an array.' });
             }
 
             if (process.env.MONGODB_URI) {
                 if (mongoose.connection.readyState !== 1) await mongoose.connect(process.env.MONGODB_URI);
                 await Project.deleteMany({});
-                if (request.body.length) await Project.insertMany(request.body);
+                if (projects.length) await Project.insertMany(projects);
             } else {
                 return response.status(503).json({ error: 'Set MONGODB_URI in Vercel project settings for shared saves.' });
             }
 
-            return response.status(200).json(request.body);
+            return response.status(200).json(projects);
         }
 
         response.setHeader('Allow', ['GET', 'PUT']);
         return response.status(405).json({ error: 'Method not allowed.' });
     } catch (error) {
         console.error(error);
-        return response.status(500).json({ error: 'Project API failed.' });
+        return response.status(500).json({ error: error.message || 'Project API failed.' });
     }
 }
