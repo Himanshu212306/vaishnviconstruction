@@ -17,9 +17,26 @@ const projectSchema = new mongoose.Schema({
 
 const Project = mongoose.models.VaishnaviProject || mongoose.model('VaishnaviProject', projectSchema);
 
+function getMongoUri() {
+    const uri = process.env.MONGODB_URI?.trim();
+    if (!uri) return null;
+
+    try {
+        const parsedUri = new URL(uri);
+        if (parsedUri.protocol !== 'mongodb+srv:' || !parsedUri.hostname.endsWith('.mongodb.net')) {
+            throw new Error('MONGODB_URI must use the Atlas mongodb+srv URL ending in .mongodb.net.');
+        }
+    } catch (error) {
+        throw new Error(`Invalid MONGODB_URI: ${error.message}`);
+    }
+
+    return uri;
+}
+
 async function getMongoProjects() {
-    if (!process.env.MONGODB_URI) return null;
-    if (mongoose.connection.readyState !== 1) await mongoose.connect(process.env.MONGODB_URI);
+    const mongoUri = getMongoUri();
+    if (!mongoUri) return null;
+    if (mongoose.connection.readyState !== 1) await mongoose.connect(mongoUri);
     const projects = await Project.find().sort({ id: -1 }).lean();
     if (projects.length) return projects;
     await Project.insertMany(defaultProjects);
@@ -47,8 +64,8 @@ export default async function handler(request, response) {
                 return response.status(400).json({ error: 'Projects must be an array.' });
             }
 
-            if (process.env.MONGODB_URI) {
-                if (mongoose.connection.readyState !== 1) await mongoose.connect(process.env.MONGODB_URI);
+            if (getMongoUri()) {
+                if (mongoose.connection.readyState !== 1) await mongoose.connect(getMongoUri());
                 await Project.deleteMany({});
                 if (projects.length) await Project.insertMany(projects);
             } else {
